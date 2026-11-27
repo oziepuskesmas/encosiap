@@ -40,6 +40,26 @@ let global429CooldownUntil = 0;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+const SSI_TRANSIENT_STATUSES = new Set([0, 429, 500, 502, 503, 504]);
+
+async function postSsiWithRetry(tabId, endpoint, payload, maxRetries = 5) {
+  let lastRes = null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    lastRes = await postWithAuthRetry(tabId, endpoint, payload);
+    if (lastRes?.ok) return lastRes;
+
+    const status = Number(lastRes?.status ?? lastRes?.body?.statusCode ?? 0);
+    if (!SSI_TRANSIENT_STATUSES.has(status) || attempt >= maxRetries) {
+      return lastRes;
+    }
+
+    const waitMs = status === 429 ? 15000 : 1500 * (attempt + 1);
+    console.warn(`[pelayananApi] ${endpoint} HTTP ${status}, auto-retry ${attempt + 1}/${maxRetries} dalam ${waitMs}ms`);
+    await sleep(waitMs);
+  }
+  return lastRes;
+}
+
 function base64ToBytes(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
@@ -460,14 +480,14 @@ export async function resolveRegId(tabId, { regId, ticketNumber, nik, faskesCode
     return [];
   };
 
-  let res = await postWithAuthRetry(tabId, endpoint, buildPayload(false));
+  let res = await postSsiWithRetry(tabId, endpoint, buildPayload(false));
   if (!res.ok) {
     throw new Error(res.body?.message || res.error || `Gagal mencari pasien di daftar kunjungan (${res.status})`);
   }
 
   let rows = extractRows(res);
   if (!rows.length && ticketNumber && nik) {
-    res = await postWithAuthRetry(tabId, endpoint, buildPayload(true));
+    res = await postSsiWithRetry(tabId, endpoint, buildPayload(true));
     if (res.ok) rows = extractRows(res);
   }
 
@@ -554,7 +574,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
   });
 
   // 1. Ambil detail skrining awal
-  const detailRes = await postWithAuthRetry(tabId, DETAIL_SCREENING_URL, { reg_id: regId });
+  const detailRes = await postSsiWithRetry(tabId, DETAIL_SCREENING_URL, { reg_id: regId });
   if (!detailRes.ok || !detailRes.body?.data) {
     throw new Error(detailRes.body?.message || detailRes.error || `Gagal mengambil detail skrining (${detailRes.status})`);
   }
@@ -584,7 +604,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
       status_code: "layanan-mulai",
       backdate: screeningDate || ""
     };
-    const startRes = await postWithAuthRetry(tabId, SET_STATUS_URL, startPayload);
+    const startRes = await postSsiWithRetry(tabId, SET_STATUS_URL, startPayload);
     if (!startRes.ok) {
       console.warn("[pelayananApi] set-status layanan-mulai warning:", startRes.status, startRes.body);
     }
@@ -625,7 +645,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
     // Jika item termasuk daftar skip
     if (skipSet.has(normText(item.name)) && item.layananCode && item.code) {
       if (!dryRun) {
-        await postWithAuthRetry(tabId, SKIP_FORM_URL, {
+        await postSsiWithRetry(tabId, SKIP_FORM_URL, {
           reg_id: regId,
           layanan_code: item.layananCode,
           pemeriksaan_code: item.code
@@ -721,7 +741,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
     status_code: "layanan-selesai",
     backdate: screeningDate || ""
   };
-  const finishRes = await postWithAuthRetry(tabId, SET_STATUS_URL, finishPayload);
+  const finishRes = await postSsiWithRetry(tabId, SET_STATUS_URL, finishPayload);
   if (!finishRes.ok) {
     throw new Error(finishRes.body?.message || finishRes.error || `Gagal menyelesaikan layanan (${finishRes.status})`);
   }
@@ -729,7 +749,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
   // 6. Kirim laporan akhir (non-fatal jika sudah pernah terkirim)
   const birthDate = formatBirthDateForReport(patientDetail.birth_date || patient.tanggal_lahir);
   if (ticketNumber && birthDate) {
-    await postWithAuthRetry(tabId, SENT_REPORT_URL, {
+    await postSsiWithRetry(tabId, SENT_REPORT_URL, {
       ticket_number: ticketNumber,
       birth_date: birthDate,
       is_final: false
@@ -807,7 +827,7 @@ export async function fetchPendingPatientsApi(tabId, options = {}) {
             partner_code: ""
           };
 
-      const res = await postWithAuthRetry(tabId, endpoint, payload);
+      const res = await postSsiWithRetry(tabId, endpoint, payload);
       if (!res.ok) {
         throw new Error(res.body?.message || res.error || `Gagal membaca antrean ${st.label} (${res.status})`);
       }
