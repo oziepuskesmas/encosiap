@@ -853,6 +853,13 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         if (wrap) wrap.style.display = e.target.value === "SEKOLAH" ? "none" : "flex";
       });
 
+      ["asik-scan-start", "asik-scan-end"].forEach(id => {
+        const el = document.getElementById(id);
+        el?.addEventListener("click", () => {
+          try { el.showPicker?.(); } catch (_) {}
+        });
+      });
+
       document.getElementById("asik-btn-back-mode")?.addEventListener("click", () => renderModeSelection());
       document.getElementById("asik-btn-start-scan")?.addEventListener("click", async () => {
         const isSchoolTab = document.getElementById("asik-live-category")?.value === "SEKOLAH";

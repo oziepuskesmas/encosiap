@@ -203,6 +203,9 @@ export function initDaftarLayani() {
     String(now.getMonth() + 1).padStart(2, "0"),
     String(now.getDate()).padStart(2, "0")
   ].join("-");
+  inputDate.addEventListener("click", () => {
+    try { inputDate.showPicker?.(); } catch (_) {}
+  });
 
   function saveState() {
     chrome.storage.local.set({
