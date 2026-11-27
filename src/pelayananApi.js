@@ -852,6 +852,8 @@ export async function fetchPendingPatientsApi(tabId, options = {}) {
 
         const pInfo = item?.patient || {};
         const sInfo = item?.school || item?.patient_school || {};
+        const rawAttend = item?.treatment?.attend_date || item?.register_date || "";
+        const attendDate = String(rawAttend).slice(0, 10).match(/^\d{4}-\d{2}-\d{2}$/) ? String(rawAttend).slice(0, 10) : "";
         patients.push({
           id: regId || `asik_${item?.ticket_number || Date.now()}`,
           reg_id: regId,
@@ -863,6 +865,7 @@ export async function fetchPendingPatientsApi(tabId, options = {}) {
           sekolah: String(sInfo.school_name || sInfo.name || "").trim(),
           kelas: String(sInfo.class_name || "").trim(),
           unitPelayanan: String(sInfo.school_name || sInfo.name || item?.partner_name || "").trim(),
+          attendDate,
           sourceTab: st.label,
           isSchool: !!isSchool
         });

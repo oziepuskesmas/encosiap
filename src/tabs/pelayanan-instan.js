@@ -793,6 +793,10 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
       }
 
       const detectedSchool = !!(asikTab.url && asikTab.url.includes("ckg-pelayanan-sekolah"));
+      const nowD = new Date();
+      const todayIso = [nowD.getFullYear(), String(nowD.getMonth() + 1).padStart(2, "0"), String(nowD.getDate()).padStart(2, "0")].join("-");
+      const agoD = new Date(nowD.getTime() - 30 * 86400000);
+      const agoIso = [agoD.getFullYear(), String(agoD.getMonth() + 1).padStart(2, "0"), String(agoD.getDate()).padStart(2, "0")].join("-");
 
       containerEl.innerHTML = `
         <div class="field" style="padding: 12px; display: flex; flex-direction: column; gap: 10px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px;">
@@ -806,6 +810,17 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
             </select>
           </div>
 
+          <div id="asik-date-range-wrap" style="display: ${detectedSchool ? "none" : "flex"}; gap: 6px;">
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 3px;">Dari Tanggal (Backdate)</label>
+              <input type="date" id="asik-scan-start" class="field__input" value="${agoIso}" style="width: 100%; height: 30px; font-size: 11px;">
+            </div>
+            <div style="flex: 1;">
+              <label style="display: block; font-size: 10px; color: #94a3b8; margin-bottom: 3px;">Sampai Tanggal</label>
+              <input type="date" id="asik-scan-end" class="field__input" value="${todayIso}" style="width: 100%; height: 30px; font-size: 11px;">
+            </div>
+          </div>
+
           <div style="display: flex; flex-direction: column; gap: 6px;">
             <span style="font-size: 10.5px; color: #94a3b8;">Bagian yang akan di-scan:</span>
             <label style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #f8fafc; cursor: pointer;">
@@ -815,6 +830,10 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
             <label style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #f8fafc; cursor: pointer;">
               <input type="checkbox" id="asik-chk-sedang" checked style="cursor: pointer;">
               <span>Sedang Pemeriksaan</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #7dd3fc; cursor: pointer; margin-top: 2px;">
+              <input type="checkbox" id="asik-chk-backdate" checked style="cursor: pointer;">
+              <span>Gunakan tanggal daftar asli pasien (Backdate)</span>
             </label>
           </div>
 
@@ -829,16 +848,31 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         </div>
       `;
 
+      document.getElementById("asik-live-category")?.addEventListener("change", (e) => {
+        const wrap = document.getElementById("asik-date-range-wrap");
+        if (wrap) wrap.style.display = e.target.value === "SEKOLAH" ? "none" : "flex";
+      });
+
       document.getElementById("asik-btn-back-mode")?.addEventListener("click", () => renderModeSelection());
       document.getElementById("asik-btn-start-scan")?.addEventListener("click", async () => {
         const isSchoolTab = document.getElementById("asik-live-category")?.value === "SEKOLAH";
         const includeBelum = !!document.getElementById("asik-chk-belum")?.checked;
         const includeSedang = !!document.getElementById("asik-chk-sedang")?.checked;
+        const useBackdate = !!document.getElementById("asik-chk-backdate")?.checked;
+        const screeningStartDate = document.getElementById("asik-scan-start")?.value || null;
+        const screeningEndDate = document.getElementById("asik-scan-end")?.value || null;
         if (!includeBelum && !includeSedang) {
           alert("Pilih minimal 1 bagian (Belum Pemeriksaan atau Sedang Pemeriksaan).");
           return;
         }
-        await executeAsikLiveScan(asikTab, { isSchoolTab, includeBelum, includeSedang });
+        await executeAsikLiveScan(asikTab, {
+          isSchoolTab,
+          includeBelum,
+          includeSedang,
+          useBackdate,
+          screeningStartDate,
+          screeningEndDate
+        });
       });
     } catch (err) {
       console.error("[handleLoadFromAsikLive] error:", err);
@@ -847,7 +881,7 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
     }
   }
 
-  async function executeAsikLiveScan(asikTab, { isSchoolTab, includeBelum, includeSedang }) {
+  async function executeAsikLiveScan(asikTab, { isSchoolTab, includeBelum, includeSedang, useBackdate = true, screeningStartDate = null, screeningEndDate = null }) {
     try {
       const scanParts = [
         includeBelum ? "Belum Pemeriksaan" : null,
@@ -877,7 +911,9 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
             type: "SCAN_ASIK_LIVE_API",
             isSchool: isSchoolTab,
             includeBelum,
-            includeSedang
+            includeSedang,
+            screeningStartDate,
+            screeningEndDate
           });
           if (apiScan?.ok && Array.isArray(apiScan.patients)) {
             scanned = apiScan.patients;
@@ -946,6 +982,7 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         _status: "idle",
         status: item.sourceTab === "Sedang Pemeriksaan" ? "SEDANG_PEMERIKSAAN" : "BELUM_PEMERIKSAAN",
         sourceTab: item.sourceTab || "Belum Pemeriksaan",
+        attendDate: useBackdate ? (item.attendDate || "") : "",
         isSchool: typeof item.isSchool === "boolean" ? item.isSchool : isSchoolTab,
         nik: item.nik || ""
       }));

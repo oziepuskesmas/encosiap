@@ -395,6 +395,7 @@ async function processSingleAsikLiveJob(tabId, curJob, { allowDomFallback = true
         regId: patient.reg_id || null,
         ticketNumber: patient.nomorTiket,
         isSchool: !!patient.isSchool,
+        screeningDate: patient.attendDate || null,
         dryRun: false,
         fieldRules: apiRules,
         interFormDelayMs,
@@ -528,7 +529,8 @@ async function processSingleAsikLiveJob(tabId, curJob, { allowDomFallback = true
         no_tiket: patient.nomorTiket || "",
         kategori: catLabel,
         status_pendaftaran: "Sudah Terdaftar",
-        status_pelayanan: "Selesai Pelayanan"
+        status_pelayanan: "Selesai Pelayanan",
+        tanggal_pelayanan: patient.attendDate || new Date().toISOString().split("T")[0]
       }).then(() => flushPendingPatientSync()).catch(() => {});
     }
 
