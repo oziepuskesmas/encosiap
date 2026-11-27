@@ -511,28 +511,7 @@ async function processSingleAsikLiveJob(tabId, curJob, { allowDomFallback = true
       recordStatus: "DONE_PELAYANAN"
     });
 
-    if (resolvedNik && /^\d{16}$/.test(resolvedNik)) {
-      const catLabel = patient.isSchool ? "SEKOLAH" : "UMUM";
-      updateQueueStatusToCkgbankot({
-        nik: resolvedNik,
-        jenis: catLabel,
-        status_pendaftaran: "Sudah Terdaftar",
-        status_pelayanan: "Selesai Pelayanan",
-        no_tiket: patient.nomorTiket || "",
-        keterangan: "Selesai via Menu Pasien ASIK Live"
-      }).catch(() => {});
-      syncPatientToCkgbankot({
-        nik: resolvedNik,
-        nama: patient.nama || "",
-        tanggal_lahir: patient.tanggalLahir || "",
-        jenis_kelamin: patient.jenisKelamin || "",
-        no_tiket: patient.nomorTiket || "",
-        kategori: catLabel,
-        status_pendaftaran: "Sudah Terdaftar",
-        status_pelayanan: "Selesai Pelayanan",
-        tanggal_pelayanan: patient.attendDate || new Date().toISOString().split("T")[0]
-      }).then(() => flushPendingPatientSync()).catch(() => {});
-    }
+    // Fitur "Periksa Langsung dari Web ASIK" (ASIK_LIVE) tidak merekam / mengirim data ke ckgbankot
 
     chrome.runtime.sendMessage({
       type: "PELAYANAN_INSTAN_STATUS",

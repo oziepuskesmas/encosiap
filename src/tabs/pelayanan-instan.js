@@ -2075,22 +2075,24 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
       flushSaveRecordsToSession();
       flushSyncStatsToActiveLog();
       renderPatientList(getSortedRecords());
-      flushPendingPatientSync().catch(() => { });
+      if (selectedCategory !== "ASIK_LIVE") {
+        flushPendingPatientSync().catch(() => { });
 
-      // 🤖 Kirim Sesi Log Pelayanan ke Database ckgbankot
-      const totalP = records.length;
-      const b = records.filter(r => isRecordDone(r)).length;
-      const g = records.filter(r => isRecordError(r)).length;
-      if (totalP > 0) {
-        syncLogToCkgbankot({
-          jenis_kegiatan: "Pelayanan " + (selectedCategory || "UMUM"),
-          total_pasien: totalP,
-          jumlah_berhasil: b,
-          jumlah_terdaftar: 0,
-          jumlah_gagal: g,
-          status: g > 0 ? "Selesai Sebagian" : "Selesai",
-          keterangan: `Pelayanan selesai: ${b} selesai pelayanan, ${g} gagal/missing.`
-        }).catch(e => console.warn("[ENCO Sync] syncLog Pelayanan error:", e));
+        // 🤖 Kirim Sesi Log Pelayanan ke Database ckgbankot
+        const totalP = records.length;
+        const b = records.filter(r => isRecordDone(r)).length;
+        const g = records.filter(r => isRecordError(r)).length;
+        if (totalP > 0) {
+          syncLogToCkgbankot({
+            jenis_kegiatan: "Pelayanan " + (selectedCategory || "UMUM"),
+            total_pasien: totalP,
+            jumlah_berhasil: b,
+            jumlah_terdaftar: 0,
+            jumlah_gagal: g,
+            status: g > 0 ? "Selesai Sebagian" : "Selesai",
+            keterangan: `Pelayanan selesai: ${b} selesai pelayanan, ${g} gagal/missing.`
+          }).catch(e => console.warn("[ENCO Sync] syncLog Pelayanan error:", e));
+        }
       }
       return;
     }
@@ -2117,34 +2119,36 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         debouncedSaveRecordsToSession();
         renderPatientList(getSortedRecords());
 
-        // 🤖 Sinkronisasi Pelayanan Selesai ke Database ckgbankot & Antrean Bot
-        const rec = records[idx];
-        updateQueueStatusToCkgbankot({
-          nik: rec.nik,
-          jenis: (selectedCategory && selectedCategory.includes("SEKOLAH")) ? "SEKOLAH" : "UMUM",
-          status_pelayanan: "Selesai Pelayanan",
-          keterangan: "Pelayanan Selesai via Bot ENCO"
-        }).catch(e => console.warn("[ENCO Sync] updateQueueStatusToCkgbankot error:", e));
+        // 🤖 Sinkronisasi Pelayanan Selesai ke Database ckgbankot & Antrean Bot (kecuali ASIK_LIVE)
+        if (selectedCategory !== "ASIK_LIVE") {
+          const rec = records[idx];
+          updateQueueStatusToCkgbankot({
+            nik: rec.nik,
+            jenis: (selectedCategory && selectedCategory.includes("SEKOLAH")) ? "SEKOLAH" : "UMUM",
+            status_pelayanan: "Selesai Pelayanan",
+            keterangan: "Pelayanan Selesai via Bot ENCO"
+          }).catch(e => console.warn("[ENCO Sync] updateQueueStatusToCkgbankot error:", e));
 
-        syncPatientToCkgbankot({
-          nik: rec.nik,
-          nama: rec.nama || rec.name,
-          tanggal_lahir: rec.tanggal_lahir || rec.tanggallahir || rec.dob || rec.tgllahir || "",
-          jenis_kelamin: rec.jenis_kelamin || rec.jeniskelamin || rec.jk || rec.gender || "",
-          status_pernikahan: rec.status_pernikahan || rec.statuspernikahan || rec.statusnikah || rec.nikah || "",
-          pekerjaan: rec.pekerjaan || rec.job || "",
-          provinsi: rec.provinsi || rec.province || "Jawa Barat",
-          kab_kota: rec.kab_kota || rec.kabkota || rec.kota || rec.kabupaten || "Kab. Bandung",
-          kecamatan: rec.kecamatan || rec.district || "Banjaran",
-          kelurahan: rec.kelurahan || rec.desa || rec.subdistrict || "",
-          alamat: rec.alamat || rec.detailalamat || rec.detaildomisili || rec.address || "",
-          no_tiket: rec.no_tiket || rec.ticket || "",
-          kategori: selectedCategory || "UMUM",
-          status_pendaftaran: "Sudah Terdaftar",
-          status_pelayanan: "Selesai Pelayanan",
-          tanggal_pelayanan: new Date().toISOString().split("T")[0],
-          raw_details: rec
-        }).catch(e => console.warn("[ENCO Sync] syncPatient Pelayanan error:", e));
+          syncPatientToCkgbankot({
+            nik: rec.nik,
+            nama: rec.nama || rec.name,
+            tanggal_lahir: rec.tanggal_lahir || rec.tanggallahir || rec.dob || rec.tgllahir || "",
+            jenis_kelamin: rec.jenis_kelamin || rec.jeniskelamin || rec.jk || rec.gender || "",
+            status_pernikahan: rec.status_pernikahan || rec.statuspernikahan || rec.statusnikah || rec.nikah || "",
+            pekerjaan: rec.pekerjaan || rec.job || "",
+            provinsi: rec.provinsi || rec.province || "Jawa Barat",
+            kab_kota: rec.kab_kota || rec.kabkota || rec.kota || rec.kabupaten || "Kab. Bandung",
+            kecamatan: rec.kecamatan || rec.district || "Banjaran",
+            kelurahan: rec.kelurahan || rec.desa || rec.subdistrict || "",
+            alamat: rec.alamat || rec.detailalamat || rec.detaildomisili || rec.address || "",
+            no_tiket: rec.no_tiket || rec.ticket || "",
+            kategori: selectedCategory || "UMUM",
+            status_pendaftaran: "Sudah Terdaftar",
+            status_pelayanan: "Selesai Pelayanan",
+            tanggal_pelayanan: new Date().toISOString().split("T")[0],
+            raw_details: rec
+          }).catch(e => console.warn("[ENCO Sync] syncPatient Pelayanan error:", e));
+        }
       }
 
       if (recordStatus !== "MISSING") {
@@ -2193,8 +2197,8 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         records[idx]._formStep = (formIndex && formTotal) ? `${formIndex}/${formTotal}` : (records[idx]._formStep || "");
       }
 
-      // 🤖 Jika pasien sudah pernah di-input skrining sebelumnya di ASIK, update status ke portal ckgbankot
-      if (automationStatus === "already-screened" || recordStatus === "ALREADY_SCREENED") {
+      // 🤖 Jika pasien sudah pernah di-input skrining sebelumnya di ASIK, update status ke portal ckgbankot (kecuali ASIK_LIVE)
+      if ((automationStatus === "already-screened" || recordStatus === "ALREADY_SCREENED") && selectedCategory !== "ASIK_LIVE") {
         const rec = records[idx];
         updateQueueStatusToCkgbankot({
           nik: rec.nik,
