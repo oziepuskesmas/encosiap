@@ -1947,6 +1947,24 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
     });
   }
 
+  let instanRenderTimer = null;
+  let lastInstanRenderAt = 0;
+  function throttledRenderPatientList(delay = 400) {
+    const nowMs = Date.now();
+    if (nowMs - lastInstanRenderAt >= delay) {
+      lastInstanRenderAt = nowMs;
+      renderPatientList(getSortedRecords());
+      return;
+    }
+    if (!instanRenderTimer) {
+      instanRenderTimer = setTimeout(() => {
+        instanRenderTimer = null;
+        lastInstanRenderAt = Date.now();
+        renderPatientList(getSortedRecords());
+      }, delay - (nowMs - lastInstanRenderAt));
+    }
+  }
+
   let saveSessionTimer = null;
   function debouncedSaveRecordsToSession(delay = 1500) {
     if (saveSessionTimer) clearTimeout(saveSessionTimer);
@@ -2228,10 +2246,11 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         }).catch(e => console.warn("[ENCO Sync] syncPatient Pernah Input error:", e));
       }
 
-      // Auto-follow: jika pasien in-progress berada di luar halaman aktif, otomatis geser ke halaman tersebut
-      if (automationStatus === "in-progress") {
+      // Auto-follow hanya saat pasien baru mulai in-progress (bukan setiap update form)
+      const isFormProgressOnly = records[idx]._status === "in-progress" && typeof percent === "number";
+      if (automationStatus === "in-progress" && !isFormProgressOnly) {
         const sorted = getSortedRecords();
-        const sortedIdx = sorted.findIndex(r => r.nik === nik);
+        const sortedIdx = sorted.findIndex(r => r.nik === nik || r.nomorTiket === nik || r.id === nik);
         if (sortedIdx !== -1) {
           const targetPage = Math.floor(sortedIdx / INSTAN_PAGE_SIZE) + 1;
           if (targetPage !== currentInstanPage) {
@@ -2240,8 +2259,13 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
         }
       }
 
-      saveRecordsToSession();
-      renderPatientList(getSortedRecords());
+      if (records[idx]._status === "in-progress") {
+        debouncedSaveRecordsToSession(2500);
+        throttledRenderPatientList(400);
+      } else {
+        debouncedSaveRecordsToSession(1500);
+        renderPatientList(getSortedRecords());
+      }
     }
   });
 

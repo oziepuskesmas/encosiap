@@ -208,7 +208,12 @@ export function initDaftarLayani() {
     try { inputDate.showPicker?.(); } catch (_) {}
   });
 
+  let saveStateTimer = null;
   function saveState() {
+    if (saveStateTimer) {
+      clearTimeout(saveStateTimer);
+      saveStateTimer = null;
+    }
     chrome.storage.local.set({
       [STATE_KEY]: {
         patients,
@@ -221,6 +226,49 @@ export function initDaftarLayani() {
         isSetupCollapsed
       }
     }).catch(() => {});
+  }
+
+  function debouncedSaveState(delay = 2500) {
+    if (saveStateTimer) clearTimeout(saveStateTimer);
+    saveStateTimer = setTimeout(() => {
+      saveStateTimer = null;
+      saveState();
+    }, delay);
+  }
+
+  let activeLogTimer = null;
+  function debouncedUpdateActiveLog(payload, delay = 5000, immediate = false) {
+    if (immediate) {
+      if (activeLogTimer) {
+        clearTimeout(activeLogTimer);
+        activeLogTimer = null;
+      }
+      updateActiveLog("pasien", payload).catch(() => {});
+      return;
+    }
+    if (activeLogTimer) clearTimeout(activeLogTimer);
+    activeLogTimer = setTimeout(() => {
+      activeLogTimer = null;
+      updateActiveLog("pasien", payload).catch(() => {});
+    }, delay);
+  }
+
+  let renderListTimer = null;
+  let lastRenderListAt = 0;
+  function throttledRenderList(delay = 400) {
+    const nowMs = Date.now();
+    if (nowMs - lastRenderListAt >= delay) {
+      lastRenderListAt = nowMs;
+      renderList();
+      return;
+    }
+    if (!renderListTimer) {
+      renderListTimer = setTimeout(() => {
+        renderListTimer = null;
+        lastRenderListAt = Date.now();
+        renderList();
+      }, delay - (nowMs - lastRenderListAt));
+    }
   }
 
   function updateStats() {
@@ -944,7 +992,21 @@ export function initDaftarLayani() {
         }
       }
 
-      updateStats();
+      if (status === "in-progress" && !isFinished && typeof index === "number" && patients[index]) {
+        // Fast path O(1): saat update form in-progress, jangan hitung ulang stats ribuan data & jangan saveState
+        const existingRow = document.getElementById(`dl-row-${index}`);
+        if (existingRow) {
+          existingRow.innerHTML = renderRowInner(patients[index], index);
+        } else if (activeFilter === "all") {
+          const targetPage = Math.floor(index / PAGE_SIZE) + 1;
+          if (currentPage !== targetPage) currentPage = targetPage;
+          throttledRenderList(400);
+        } else if (activeFilter === "in-progress") {
+          throttledRenderList(400);
+        }
+        return;
+      }
+
       if (activeFilter === "all" && typeof index === "number") {
         const targetPage = Math.floor(index / PAGE_SIZE) + 1;
         if (currentPage !== targetPage) {
@@ -969,7 +1031,7 @@ export function initDaftarLayani() {
         const logStatus = isFinished
           ? (wasStopped ? "paused" : gagal > 0 ? "has-error" : "completed")
           : "running";
-        updateActiveLog("pasien", {
+        debouncedUpdateActiveLog({
           fileName: loadedFileName ? `[One-Stop] ${loadedFileName}` : "[One-Stop] Daftar & Layani",
           category: selCategory.value || "UMUM",
           total: patients.length,
@@ -979,7 +1041,7 @@ export function initDaftarLayani() {
           pernahInput,
           status: logStatus,
           data: patients
-        }).catch(() => {});
+        }, 5000, !!isFinished);
       }
 
       if (isFinished) {
@@ -987,10 +1049,13 @@ export function initDaftarLayani() {
         statusMsg.textContent = wasStopped
           ? "Proses dihentikan oleh pengguna."
           : "Semua proses Daftar & Layani telah selesai!";
-      } else if (typeof index === "number" && status !== "in-progress") {
-        statusMsg.textContent = `Memproses pasien ${index + 1}/${patients.length}: ${patients[index]?.nama || ""} (${message || ""})`;
+        saveState();
+      } else {
+        if (typeof index === "number" && status !== "in-progress") {
+          statusMsg.textContent = `Memproses pasien ${index + 1}/${patients.length}: ${patients[index]?.nama || ""} (${message || ""})`;
+        }
+        debouncedSaveState(2500);
       }
-      saveState();
     }
   });
 
