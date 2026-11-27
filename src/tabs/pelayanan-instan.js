@@ -37,7 +37,7 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
   const containerEl = document.getElementById("pelayanan-instan-container");
   let records = [];
   let isInitialized = false;
-  let concurrentLimit = 3;
+  let concurrentLimit = 1;
   let selectedCategory = "EXCEL_SEKOLAH";
   let pelayananInstanMode = null; // null | "EXCEL_SEKOLAH" | "EXCEL_UMUM" | "UMUM" | "SEKOLAH"
   let selectedSekolah = "";
@@ -138,15 +138,16 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
   const concurrentInput = document.createElement("input");
   concurrentInput.type = "number";
   concurrentInput.min = "1";
-  concurrentInput.max = "20";
-  concurrentInput.value = "3";
+  concurrentInput.max = "5";
+  concurrentInput.value = "1";
   concurrentInput.className = "instan-concurrent-input";
-  concurrentInput.title = "Jumlah pasien yang dijalankan bersamaan";
+  concurrentInput.title = "Jumlah pasien yang diproses paralel via API (1-5, tanpa DOM)";
   concurrentInput.addEventListener("change", () => {
     const val = parseInt(concurrentInput.value, 10);
-    concurrentLimit = isNaN(val) || val < 1 ? 1 : val > 20 ? 20 : val;
+    concurrentLimit = isNaN(val) || val < 1 ? 1 : val > 5 ? 5 : val;
     concurrentInput.value = String(concurrentLimit);
     chrome.storage.local.set({ "pelayanan-concurrent-limit": concurrentLimit });
+    chrome.storage.session.set({ pelayananConcurrentLimit: concurrentLimit });
   });
 
   bulkFooterRow.appendChild(btnStartBulk);
@@ -1225,7 +1226,7 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
     }
     syncStatsToActiveLog();
     setBulkRunningState(true);
-    chrome.runtime.sendMessage({ type: "RUN_ASIK_LIVE_BATCH", jobs }).catch(() => {});
+    chrome.runtime.sendMessage({ type: "RUN_ASIK_LIVE_BATCH", jobs, concurrentLimit }).catch(() => {});
   }
 
   btnStartBulk.addEventListener("click", async () => {
@@ -2225,7 +2226,7 @@ export function init({ checkDeviceOrSignOut, getPendaftaranPatients } = {}) {
       const savedLimit = await chrome.storage.local.get("pelayanan-concurrent-limit");
       if (savedLimit["pelayanan-concurrent-limit"]) {
         const parsedLimit = parseInt(savedLimit["pelayanan-concurrent-limit"], 10);
-        concurrentLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 3 : parsedLimit > 20 ? 20 : parsedLimit;
+        concurrentLimit = isNaN(parsedLimit) || parsedLimit < 1 ? 1 : parsedLimit > 5 ? 5 : parsedLimit;
         concurrentInput.value = String(concurrentLimit);
       }
 

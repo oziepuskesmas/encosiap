@@ -345,286 +345,333 @@ let asikLiveQueue = [];
 let asikLiveRunning = false;
 let asikLivePaused = false;
 let asikLiveAbortCtrl = null;
+let activeAsikWorkers = 0;
+let isDispatchingAsikLive = false;
 
-async function dispatchAsikLiveQueue() {
-  if (!asikLiveRunning) return;
+async function processSingleAsikLiveJob(tabId, curJob, { allowDomFallback = true, interFormDelayMs = 400 } = {}) {
+  const patient = curJob.patientRecord;
+  const pIdentifier = patient.nomorTiket || patient.nik || patient.nama;
 
-  const tabs = await chrome.tabs.query({ url: "*://sehatindonesiaku.kemkes.go.id/*" });
-  let asikTab = tabs.find(t => t.url && t.url.includes("ckg-pelayanan"));
-  if (!asikTab && tabs.length > 0) asikTab = tabs[0];
+  chrome.runtime.sendMessage({
+    type: "PELAYANAN_INSTAN_STATUS",
+    nik: pIdentifier,
+    automationStatus: "in-progress"
+  }).catch(() => {});
 
-  if (!asikTab) {
-    chrome.runtime.sendMessage({
-      type: "PELAYANAN_INSTAN_STATUS",
-      text: "Tab web ASIK ckg-pelayanan tidak ditemukan!"
-    }).catch(() => {});
-    asikLiveRunning = false;
-    await chrome.storage.session.set({ pelayananRunning: false, asikLiveRunning: false });
-    return;
-  }
+  await updatePelayananInstanRecord(pIdentifier, rec => {
+    rec._status = "in-progress";
+  });
 
-  // Pastikan tab berada di halaman ckg-pelayanan
-  if (asikTab.url && !asikTab.url.includes("ckg-pelayanan")) {
-    await chrome.tabs.update(asikTab.id, { url: "https://sehatindonesiaku.kemkes.go.id/ckg-pelayanan" });
-    await new Promise(resolve => {
-      const listener = (tid, changeInfo) => {
-        if (tid === asikTab.id && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener);
-          resolve();
+  try {
+    const { ckg_ranges: nr, ckg_config: cr } = await chrome.storage.local.get(["ckg_ranges", "ckg_config"]);
+    const sRanges = nr ?? {};
+    const iDelay = Math.round(1e3 * (cr?.delay ?? 1.2));
+
+    const apiPatientData = {
+      nama: patient.nama,
+      nik: patient.nik || patient.nomorTiket,
+      nomorTiket: patient.nomorTiket,
+      reg_id: patient.reg_id || null,
+      tanggal_lahir: patient.tanggalLahir || patient.tanggal_lahir || "",
+      kategori: patient.isSchool ? "anak" : "dewasa",
+      jenisKelamin: patient.jenisKelamin || "perempuan",
+      jenis_kelamin: patient.jenisKelamin || "perempuan",
+      status_pernikahan: "menikah",
+      attendDate: patient.attendDate || null
+    };
+
+    const apiRules = await o(apiPatientData, sRanges);
+    let isSuccess = false;
+    let usedApi = false;
+    let resolvedNik = patient.nik || "";
+    let lastApiError = "";
+
+    // Jalur Utama: 100% API (tanpa DOM/klik browser)
+    try {
+      const ckgUser = await getCkgUser(tabId);
+      console.log(`[asikLive] Menjalankan Pelayanan API untuk ${patient.nama} (tiket: ${patient.nomorTiket}, regId: ${patient.reg_id || "-"})`);
+      const apiRes = await runPelayananApi(tabId, apiPatientData, {
+        ckgUser,
+        regId: patient.reg_id || null,
+        ticketNumber: patient.nomorTiket,
+        isSchool: !!patient.isSchool,
+        dryRun: false,
+        fieldRules: apiRules,
+        interFormDelayMs,
+        onProgress: (idx, total, title) => {
+          const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0;
+          chrome.runtime.sendMessage({
+            type: "PELAYANAN_INSTAN_STATUS",
+            nik: pIdentifier,
+            automationStatus: "in-progress",
+            formIndex: idx + 1,
+            formTotal: total,
+            formName: title || "",
+            percent: pct,
+            text: `Form ${idx + 1}/${total} (${pct}%): ${title || ""}`
+          }).catch(() => {});
         }
-      };
-      chrome.tabs.onUpdated.addListener(listener);
-      setTimeout(() => { chrome.tabs.onUpdated.removeListener(listener); resolve(); }, 12000);
-    });
-    await new Promise(r => setTimeout(r, 1500));
-  }
-
-  const tabId = asikTab.id;
-
-  while (asikLiveQueue.length > 0 && asikLiveRunning) {
-    if (asikLiveAbortCtrl?.signal?.aborted) break;
-
-    const { pelayananPaused } = await chrome.storage.session.get("pelayananPaused");
-    if (pelayananPaused || asikLivePaused) {
-      await new Promise(r => setTimeout(r, 800));
-      continue;
+      });
+      if (apiRes?.status === "done") {
+        isSuccess = true;
+        usedApi = true;
+      } else {
+        const failedNames = (apiRes?.failedForms || []).map(f => `${f.name}: ${f.error}`).join("; ");
+        lastApiError = failedNames || `API belum penuh (${apiRes?.status})`;
+        console.warn(`[asikLive] Pelayanan API belum penuh (${apiRes?.status}):`, apiRes?.failedForms);
+      }
+    } catch (apiErr) {
+      lastApiError = apiErr?.message || String(apiErr);
+      console.warn(`[asikLive] Pelayanan API gagal:`, lastApiError);
     }
 
-    const curJob = asikLiveQueue.shift();
-    const patient = curJob.patientRecord;
-    const pIdentifier = patient.nomorTiket || patient.nik || patient.nama;
+    // Jika paralel (>1), jangan sentuh DOM agar tab tidak tabrakan
+    if (!isSuccess && !allowDomFallback) {
+      throw new Error(lastApiError || "Pelayanan API gagal (mode paralel tanpa DOM)");
+    }
+
+    // Jalur Fallback DOM hanya jika concurrent === 1
+    if (!isSuccess) {
+      console.log(`[asikLive] Membuka baris pasien (DOM fallback): ${patient.nama} (${patient.nomorTiket})`);
+      await openPatientInTable(tabId, patient);
+
+      console.log(`[asikLive] Konfirmasi tanggal pemeriksaan jika muncul...`);
+      await confirmMulaiPemeriksaanIfPresent(tabId);
+
+      const pDetail = await extractDetailPatientState(tabId).catch(() => null);
+      if (pDetail?.nik) resolvedNik = pDetail.nik;
+
+      const patientData = {
+        nama: patient.nama,
+        nik: pDetail?.nik || patient.nomorTiket,
+        nomorTiket: pDetail?.nomorTiket || patient.nomorTiket,
+        kategori: pDetail?.kategori || (patient.isSchool ? "anak" : "dewasa"),
+        jenisKelamin: pDetail?.jenisKelamin || patient.jenisKelamin || "perempuan",
+        status_pernikahan: "menikah",
+        attendDate: pDetail?.attendDate || null
+      };
+
+      const lRules = await o(patientData, sRanges);
+
+      const uAuto = new e({
+        tabId,
+        statusMenikah: "menikah",
+        delay: iDelay,
+        testMode: cr?.testMode ?? false,
+        fieldRules: lRules,
+        items: null,
+        attendDate: patientData.attendDate,
+        patientData,
+        onProgress: (idx, status, title) => {
+          chrome.runtime.sendMessage({
+            type: "PELAYANAN_INSTAN_STATUS",
+            nik: pIdentifier,
+            text: `${title}: ${status}`
+          }).catch(() => {});
+        },
+        onDone: () => {
+          console.log(`[asikLive] Kuesioner skrining selesai diisi untuk ${patient.nama}`);
+        }
+      });
+
+      await uAuto.run();
+      if (!uAuto._stopped && !uAuto.pelayananFinished) {
+        await uAuto.run();
+      }
+      if (!uAuto._stopped && !uAuto.pelayananFinished) {
+        console.log(`[asikLive] Menyelesaikan layanan...`);
+        const finRes = await uAuto.finishPelayanan().catch(e => ({ success: false, error: e.message }));
+        if (finRes?.success) uAuto.pelayananFinished = true;
+      }
+
+      if (uAuto.pelayananFinished) {
+        isSuccess = true;
+      } else {
+        const verifyRes = await uAuto.verifyAllDone().catch(() => null);
+        if (verifyRes?.allDone && (!uAuto.failedItems || uAuto.failedItems.length === 0)) {
+          isSuccess = true;
+        }
+      }
+
+      if (!isSuccess) {
+        throw new Error("Layanan belum terselesaikan penuh di web ASIK");
+      }
+    }
+
+    await updatePelayananInstanRecord(pIdentifier, rec => {
+      rec._status = "done";
+      rec.status = "DONE_PELAYANAN";
+      if (resolvedNik) rec.nik = resolvedNik;
+    });
+
+    await addPelayananPendingStatus({
+      nik: pIdentifier,
+      automationStatus: "done",
+      recordStatus: "DONE_PELAYANAN"
+    });
+
+    if (resolvedNik && /^\d{16}$/.test(resolvedNik)) {
+      const catLabel = patient.isSchool ? "SEKOLAH" : "UMUM";
+      updateQueueStatusToCkgbankot({
+        nik: resolvedNik,
+        jenis: catLabel,
+        status_pendaftaran: "Sudah Terdaftar",
+        status_pelayanan: "Selesai Pelayanan",
+        no_tiket: patient.nomorTiket || "",
+        keterangan: "Selesai via Menu Pasien ASIK Live"
+      }).catch(() => {});
+      syncPatientToCkgbankot({
+        nik: resolvedNik,
+        nama: patient.nama || "",
+        tanggal_lahir: patient.tanggalLahir || "",
+        jenis_kelamin: patient.jenisKelamin || "",
+        no_tiket: patient.nomorTiket || "",
+        kategori: catLabel,
+        status_pendaftaran: "Sudah Terdaftar",
+        status_pelayanan: "Selesai Pelayanan"
+      }).then(() => flushPendingPatientSync()).catch(() => {});
+    }
 
     chrome.runtime.sendMessage({
       type: "PELAYANAN_INSTAN_STATUS",
       nik: pIdentifier,
-      automationStatus: "in-progress"
+      automationStatus: "done",
+      recordStatus: "DONE_PELAYANAN",
+      text: `✓ Selesai: ${patient.nama}`
     }).catch(() => {});
 
+    if (!usedApi && allowDomFallback) {
+      console.log(`[asikLive] Kembali ke tabel pasien...`);
+      await returnToPelayananTable(tabId);
+      await new Promise(r => setTimeout(r, 1200));
+    } else {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  } catch (err) {
+    console.error(`[asikLive] Gagal memproses ${patient.nama}:`, err);
+
     await updatePelayananInstanRecord(pIdentifier, rec => {
-      rec._status = "in-progress";
+      rec._status = "error";
+      rec.status = "error";
+      rec._errorMsg = err.message;
     });
 
-    try {
-      const { ckg_ranges: nr, ckg_config: cr } = await chrome.storage.local.get(["ckg_ranges", "ckg_config"]);
-      const sRanges = nr ?? {};
-      const iDelay = Math.round(1e3 * (cr?.delay ?? 1.2));
+    await addPelayananPendingStatus({
+      nik: pIdentifier,
+      automationStatus: "error",
+      recordStatus: "error"
+    });
 
-      const apiPatientData = {
-        nama: patient.nama,
-        nik: patient.nik || patient.nomorTiket,
-        nomorTiket: patient.nomorTiket,
-        reg_id: patient.reg_id || null,
-        tanggal_lahir: patient.tanggalLahir || patient.tanggal_lahir || "",
-        kategori: patient.isSchool ? "anak" : "dewasa",
-        jenisKelamin: patient.jenisKelamin || "perempuan",
-        jenis_kelamin: patient.jenisKelamin || "perempuan",
-        status_pernikahan: "menikah",
-        attendDate: patient.attendDate || null
-      };
+    chrome.runtime.sendMessage({
+      type: "PELAYANAN_INSTAN_STATUS",
+      nik: pIdentifier,
+      automationStatus: "error",
+      recordStatus: "error",
+      text: `Error: ${err.message}`
+    }).catch(() => {});
 
-      const apiRules = await o(apiPatientData, sRanges);
-      let isSuccess = false;
-      let usedApi = false;
-      let resolvedNik = patient.nik || "";
-
-      // Jalur Utama: 100% API (tanpa DOM/klik browser)
-      try {
-        const ckgUser = await getCkgUser(tabId);
-        console.log(`[asikLive] Menjalankan Pelayanan API untuk ${patient.nama} (tiket: ${patient.nomorTiket}, regId: ${patient.reg_id || "-"})`);
-        const apiRes = await runPelayananApi(tabId, apiPatientData, {
-          ckgUser,
-          regId: patient.reg_id || null,
-          ticketNumber: patient.nomorTiket,
-          isSchool: !!patient.isSchool,
-          dryRun: false,
-          fieldRules: apiRules,
-          onProgress: (idx, total, title) => {
-            const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0;
-            chrome.runtime.sendMessage({
-              type: "PELAYANAN_INSTAN_STATUS",
-              nik: pIdentifier,
-              automationStatus: "in-progress",
-              formIndex: idx + 1,
-              formTotal: total,
-              formName: title || "",
-              percent: pct,
-              text: `Form ${idx + 1}/${total} (${pct}%): ${title || ""}`
-            }).catch(() => {});
-          }
-        });
-        if (apiRes?.status === "done") {
-          isSuccess = true;
-          usedApi = true;
-        } else {
-          console.warn(`[asikLive] Pelayanan API belum penuh (${apiRes?.status}), fallback ke DOM:`, apiRes?.failedForms);
-        }
-      } catch (apiErr) {
-        console.warn(`[asikLive] Pelayanan API gagal, fallback ke DOM:`, apiErr.message);
-      }
-
-      // Jalur Fallback DOM jika API gagal / partial
-      if (!isSuccess) {
-        // 1. Buka baris pasien di tabel web ASIK
-        console.log(`[asikLive] Membuka baris pasien (DOM fallback): ${patient.nama} (${patient.nomorTiket})`);
-        await openPatientInTable(tabId, patient);
-
-        // 2. Konfirmasi tanggal jika modal kalender muncul
-        console.log(`[asikLive] Konfirmasi tanggal pemeriksaan jika muncul...`);
-        await confirmMulaiPemeriksaanIfPresent(tabId);
-
-        // 3. Ekstrak data pasien dari halaman detail
-        const pDetail = await extractDetailPatientState(tabId).catch(() => null);
-        if (pDetail?.nik) resolvedNik = pDetail.nik;
-
-        const patientData = {
-          nama: patient.nama,
-          nik: pDetail?.nik || patient.nomorTiket,
-          nomorTiket: pDetail?.nomorTiket || patient.nomorTiket,
-          kategori: pDetail?.kategori || (patient.isSchool ? "anak" : "dewasa"),
-          jenisKelamin: pDetail?.jenisKelamin || patient.jenisKelamin || "perempuan",
-          status_pernikahan: "menikah",
-          attendDate: pDetail?.attendDate || null
-        };
-
-        // 4. Generate rules pemeriksaan default (Normal / Sehat)
-        const lRules = await o(patientData, sRanges);
-
-        // 5. Jalankan Automation
-        const uAuto = new e({
-          tabId,
-          statusMenikah: "menikah",
-          delay: iDelay,
-          testMode: cr?.testMode ?? false,
-          fieldRules: lRules,
-          items: null,
-          attendDate: patientData.attendDate,
-          patientData,
-          onProgress: (idx, status, title) => {
-            chrome.runtime.sendMessage({
-              type: "PELAYANAN_INSTAN_STATUS",
-              nik: pIdentifier,
-              text: `${title}: ${status}`
-            }).catch(() => {});
-          },
-          onDone: () => {
-            console.log(`[asikLive] Kuesioner skrining selesai diisi untuk ${patient.nama}`);
-          }
-        });
-
-        await uAuto.run();
-        if (!uAuto._stopped && !uAuto.pelayananFinished) {
-          await uAuto.run();
-        }
-        if (!uAuto._stopped && !uAuto.pelayananFinished) {
-          console.log(`[asikLive] Menyelesaikan layanan...`);
-          const finRes = await uAuto.finishPelayanan().catch(e => ({ success: false, error: e.message }));
-          if (finRes?.success) uAuto.pelayananFinished = true;
-        }
-
-        if (uAuto.pelayananFinished) {
-          isSuccess = true;
-        } else {
-          const verifyRes = await uAuto.verifyAllDone().catch(() => null);
-          if (verifyRes?.allDone && (!uAuto.failedItems || uAuto.failedItems.length === 0)) {
-            isSuccess = true;
-          }
-        }
-
-        if (!isSuccess) {
-          throw new Error("Layanan belum terselesaikan penuh di web ASIK");
-        }
-      }
-
-      // 6. Update status ke 'done' & sync ke ckgbankot
-      await updatePelayananInstanRecord(pIdentifier, rec => {
-        rec._status = "done";
-        rec.status = "DONE_PELAYANAN";
-        if (resolvedNik) rec.nik = resolvedNik;
-      });
-
-      await addPelayananPendingStatus({
-        nik: pIdentifier,
-        automationStatus: "done",
-        recordStatus: "DONE_PELAYANAN"
-      });
-
-      if (resolvedNik && /^\d{16}$/.test(resolvedNik)) {
-        const catLabel = patient.isSchool ? "SEKOLAH" : "UMUM";
-        updateQueueStatusToCkgbankot({
-          nik: resolvedNik,
-          jenis: catLabel,
-          status_pendaftaran: "Sudah Terdaftar",
-          status_pelayanan: "Selesai Pelayanan",
-          no_tiket: patient.nomorTiket || "",
-          keterangan: "Selesai via Menu Pasien ASIK Live"
-        }).catch(() => {});
-        syncPatientToCkgbankot({
-          nik: resolvedNik,
-          nama: patient.nama || "",
-          tanggal_lahir: patient.tanggalLahir || "",
-          jenis_kelamin: patient.jenisKelamin || "",
-          no_tiket: patient.nomorTiket || "",
-          kategori: catLabel,
-          status_pendaftaran: "Sudah Terdaftar",
-          status_pelayanan: "Selesai Pelayanan"
-        }).then(() => flushPendingPatientSync()).catch(() => {});
-      }
-
-      chrome.runtime.sendMessage({
-        type: "PELAYANAN_INSTAN_STATUS",
-        nik: pIdentifier,
-        automationStatus: "done",
-        recordStatus: "DONE_PELAYANAN",
-        text: `✓ Selesai: ${patient.nama}`
-      }).catch(() => {});
-
-      // 7. Kembali ke tabel hanya jika tadi masuk jalur DOM fallback
-      if (!usedApi) {
-        console.log(`[asikLive] Kembali ke tabel pasien...`);
-        await returnToPelayananTable(tabId);
-        await new Promise(r => setTimeout(r, 1200));
-      } else {
-        await new Promise(r => setTimeout(r, 600));
-      }
-
-    } catch (err) {
-      console.error(`[asikLive] Gagal memproses ${patient.nama}:`, err);
-
-      await updatePelayananInstanRecord(pIdentifier, rec => {
-        rec._status = "error";
-        rec.status = "error";
-        rec._errorMsg = err.message;
-      });
-
-      await addPelayananPendingStatus({
-        nik: pIdentifier,
-        automationStatus: "error",
-        recordStatus: "error"
-      });
-
-      chrome.runtime.sendMessage({
-        type: "PELAYANAN_INSTAN_STATUS",
-        nik: pIdentifier,
-        automationStatus: "error",
-        recordStatus: "error",
-        text: `Error: ${err.message}`
-      }).catch(() => {});
-
-      // Kembali ke tabel agar pasien berikutnya bisa lanjut
+    if (allowDomFallback) {
       try {
         await returnToPelayananTable(tabId);
         await new Promise(r => setTimeout(r, 1200));
       } catch (_) {}
     }
   }
+}
 
-  asikLiveRunning = false;
-  await chrome.storage.session.set({
-    pelayananRunning: false,
-    pelayananPaused: false,
-    asikLiveRunning: false
-  });
-  chrome.runtime.sendMessage({ type: "PELAYANAN_QUEUE_DONE" }).catch(() => {});
+async function dispatchAsikLiveQueue() {
+  if (!asikLiveRunning || isDispatchingAsikLive) return;
+  isDispatchingAsikLive = true;
+
+  try {
+    const tabs = await chrome.tabs.query({ url: "*://sehatindonesiaku.kemkes.go.id/*" });
+    let asikTab = tabs.find(t => t.url && t.url.includes("ckg-pelayanan"));
+    if (!asikTab && tabs.length > 0) asikTab = tabs[0];
+
+    if (!asikTab) {
+      chrome.runtime.sendMessage({
+        type: "PELAYANAN_INSTAN_STATUS",
+        text: "Tab web ASIK ckg-pelayanan tidak ditemukan!"
+      }).catch(() => {});
+      asikLiveRunning = false;
+      await chrome.storage.session.set({ pelayananRunning: false, asikLiveRunning: false });
+      return;
+    }
+
+    if (asikTab.url && !asikTab.url.includes("ckg-pelayanan")) {
+      await chrome.tabs.update(asikTab.id, { url: "https://sehatindonesiaku.kemkes.go.id/ckg-pelayanan" });
+      await new Promise(resolve => {
+        const listener = (tid, changeInfo) => {
+          if (tid === asikTab.id && changeInfo.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve();
+          }
+        };
+        chrome.tabs.onUpdated.addListener(listener);
+        setTimeout(() => { chrome.tabs.onUpdated.removeListener(listener); resolve(); }, 12000);
+      });
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
+    const tabId = asikTab.id;
+    const {
+      pelayananConcurrentLimit: rawLimit = 1,
+      pelayananPaused = false
+    } = await chrome.storage.session.get(["pelayananConcurrentLimit", "pelayananPaused"]);
+
+    if (pelayananPaused || asikLivePaused) return;
+    if (asikLiveAbortCtrl?.signal?.aborted) {
+      asikLiveQueue = [];
+    }
+
+    const maxConcurrent = Math.max(1, Math.min(5, Number(rawLimit) || 1));
+    const allowDomFallback = maxConcurrent === 1;
+    const interFormDelayMs = maxConcurrent > 1 ? 650 : 400;
+
+    if (asikLiveQueue.length === 0 && activeAsikWorkers === 0) {
+      asikLiveRunning = false;
+      await chrome.storage.session.set({
+        pelayananRunning: false,
+        pelayananPaused: false,
+        asikLiveRunning: false
+      });
+      chrome.runtime.sendMessage({ type: "PELAYANAN_QUEUE_DONE" }).catch(() => {});
+      return;
+    }
+
+    while (activeAsikWorkers < maxConcurrent && asikLiveQueue.length > 0 && asikLiveRunning) {
+      if (asikLiveAbortCtrl?.signal?.aborted) break;
+
+      const curJob = asikLiveQueue.shift();
+      activeAsikWorkers++;
+
+      (async (job) => {
+        try {
+          await processSingleAsikLiveJob(tabId, job, { allowDomFallback, interFormDelayMs });
+        } finally {
+          activeAsikWorkers = Math.max(0, activeAsikWorkers - 1);
+          if (asikLiveQueue.length === 0 && activeAsikWorkers === 0) {
+            asikLiveRunning = false;
+            await chrome.storage.session.set({
+              pelayananRunning: false,
+              pelayananPaused: false,
+              asikLiveRunning: false
+            });
+            chrome.runtime.sendMessage({ type: "PELAYANAN_QUEUE_DONE" }).catch(() => {});
+          } else if (asikLiveRunning) {
+            dispatchAsikLiveQueue().catch(e => console.error("[dispatchAsikLiveQueue] next error:", e));
+          }
+        }
+      })(curJob);
+
+      // Stagger start 600ms antar worker paralel agar tidak burst ke server Kemkes
+      if (activeAsikWorkers < maxConcurrent && asikLiveQueue.length > 0) {
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+  } finally {
+    isDispatchingAsikLive = false;
+  }
 }
 
 // ── One-Stop CKG: Daftar & Layani Dispatcher ──────────────────────────────
@@ -2031,15 +2078,19 @@ async function D(s) {
     }
 
     case "RUN_ASIK_LIVE_BATCH": {
-      const { jobs = [] } = s;
+      const { jobs = [], concurrentLimit = 1 } = s;
+      const limit = Math.max(1, Math.min(5, Number(concurrentLimit) || 1));
       asikLiveQueue = [...jobs];
       asikLiveRunning = true;
       asikLivePaused = false;
+      activeAsikWorkers = 0;
+      isDispatchingAsikLive = false;
       asikLiveAbortCtrl = new AbortController();
       await chrome.storage.session.set({
         pelayananRunning: true,
         pelayananPaused: false,
-        asikLiveRunning: true
+        asikLiveRunning: true,
+        pelayananConcurrentLimit: limit
       });
       setTimeout(() => {
         dispatchAsikLiveQueue().catch(e => console.error("[RUN_ASIK_LIVE_BATCH] queue error:", e));
@@ -2052,11 +2103,14 @@ async function D(s) {
       asikLiveQueue = [{ patientRecord }];
       asikLiveRunning = true;
       asikLivePaused = false;
+      activeAsikWorkers = 0;
+      isDispatchingAsikLive = false;
       asikLiveAbortCtrl = new AbortController();
       await chrome.storage.session.set({
         pelayananRunning: true,
         pelayananPaused: false,
-        asikLiveRunning: true
+        asikLiveRunning: true,
+        pelayananConcurrentLimit: 1
       });
       setTimeout(() => {
         dispatchAsikLiveQueue().catch(e => console.error("[RUN_ASIK_LIVE_SINGLE] error:", e));

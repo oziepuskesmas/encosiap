@@ -36,6 +36,7 @@ const RADIO_AUTO_FALLBACK = [
 
 let cachedCryptoConfig = null;
 let cachedCryptoPromise = null;
+let global429CooldownUntil = 0;
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -230,6 +231,11 @@ export async function formApiPost(url, payloadObj, { maxRetries = 3 } = {}) {
   const ciphertext = await tinkEncrypt(payloadObj);
 
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    const remainingCooldown = global429CooldownUntil - Date.now();
+    if (remainingCooldown > 0) {
+      await sleep(remainingCooldown);
+    }
+
     const resp = await fetch(url, {
       method: "POST",
       headers: {
@@ -244,7 +250,8 @@ export async function formApiPost(url, payloadObj, { maxRetries = 3 } = {}) {
         throw new Error(`Rate limit 429 dari form.kemkes.go.id setelah ${maxRetries}x retry`);
       }
       const waitMs = 15000 * attempt;
-      console.warn(`[pelayananApi] HTTP 429 pada ${url}, cooldown ${waitMs}ms (attempt ${attempt}/${maxRetries})`);
+      global429CooldownUntil = Math.max(global429CooldownUntil, Date.now() + waitMs);
+      console.warn(`[pelayananApi] HTTP 429 pada ${url}, global cooldown ${waitMs}ms (attempt ${attempt}/${maxRetries})`);
       await sleep(waitMs);
       continue;
     }
@@ -530,6 +537,7 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
     dryRun = false,
     fieldRules: providedRules = null,
     skipItems = [],
+    interFormDelayMs = 400,
     onProgress = null
   } = options;
 
@@ -676,8 +684,8 @@ export async function runPelayananApi(tabId, patient = {}, options = {}) {
       }
 
       submittedForms.push(item.name);
-      // Jeda 350-600ms antar form untuk mencegah rate limit 429 Cloudflare
-      await sleep(350 + Math.floor(Math.random() * 250));
+      // Jeda adaptif antar form untuk mencegah rate limit 429 Cloudflare
+      await sleep(interFormDelayMs + Math.floor(Math.random() * 250));
     } catch (err) {
       console.error(`[pelayananApi] Gagal memproses form "${item.name}":`, err);
       failedForms.push({ name: item.name, error: err.message });
