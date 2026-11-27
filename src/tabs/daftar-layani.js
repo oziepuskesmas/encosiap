@@ -148,6 +148,7 @@ export function initDaftarLayani() {
       <div id="dl-filter-bar" class="dl-filter-bar" style="display: none;">
         <button type="button" class="dl-filter-chip dl-filter-chip--active" data-filter="all">Semua (0)</button>
         <button type="button" class="dl-filter-chip" data-filter="pending">Belum Entry (0)</button>
+        <button type="button" class="dl-filter-chip" data-filter="in-progress">Sedang Entry (0)</button>
         <button type="button" class="dl-filter-chip" data-filter="already">Sudah Entry (0)</button>
         <button type="button" class="dl-filter-chip" data-filter="done">Selesai (0)</button>
         <button type="button" class="dl-filter-chip" data-filter="error">Error (0)</button>
@@ -351,15 +352,16 @@ export function initDaftarLayani() {
     if (p._status === "done" || p._stage === "done") return "done";
     if (p._status === "already-screened") return "already";
     if (p._status === "error" || p._status === "invalid-nik") return "error";
+    if (p._status === "in-progress") return "in-progress";
     return "pending";
   }
 
   function renderFilterBar() {
     if (!patients.length) {
       filterBarEl.style.display = "none";
-      return { all: 0, pending: 0, already: 0, done: 0, error: 0 };
+      return { all: 0, pending: 0, "in-progress": 0, already: 0, done: 0, error: 0 };
     }
-    const counts = { all: patients.length, pending: 0, already: 0, done: 0, error: 0 };
+    const counts = { all: patients.length, pending: 0, "in-progress": 0, already: 0, done: 0, error: 0 };
     for (const p of patients) {
       counts[getPatientFilterCategory(p)]++;
     }
@@ -367,6 +369,7 @@ export function initDaftarLayani() {
     const labels = {
       all: `Semua (${counts.all})`,
       pending: `Belum Entry (${counts.pending})`,
+      "in-progress": `Sedang Entry (${counts["in-progress"]})`,
       already: `Sudah Entry (${counts.already})`,
       done: `Selesai (${counts.done})`,
       error: `Error (${counts.error})`
@@ -382,6 +385,7 @@ export function initDaftarLayani() {
     const filterTitleMap = {
       all: "Daftar & Layani",
       pending: `Belum Entry (${counts.pending})`,
+      "in-progress": `Sedang Entry (${counts["in-progress"]})`,
       already: `Sudah Entry (${counts.already})`,
       done: `Selesai (${counts.done})`,
       error: `Ulangi Error (${retryableErrors})`
@@ -824,6 +828,7 @@ export function initDaftarLayani() {
     const filterLabelMap = {
       all: "Semua Belum Selesai",
       pending: "Belum Entry",
+      "in-progress": "Sedang Entry",
       already: "Sudah Entry",
       done: "Selesai",
       error: "Error"
@@ -840,8 +845,8 @@ export function initDaftarLayani() {
         if (activeFilter === "all") {
           return j._status !== "done" && j._status !== "already-screened" && !isNonRetryableInvalid(j);
         }
-        if (activeFilter === "pending") {
-          return getPatientFilterCategory(j) === "pending";
+        if (activeFilter === "pending" || activeFilter === "in-progress") {
+          return getPatientFilterCategory(j) === activeFilter;
         }
         if (activeFilter === "error") {
           return getPatientFilterCategory(j) === "error" && !isNonRetryableInvalid(j);
