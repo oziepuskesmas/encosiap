@@ -789,10 +789,11 @@ async function dispatchDaftarLayaniQueue(options = {}) {
     ...extra
   });
 
-  while (daftarLayaniQueue.length > 0 && daftarLayaniRunning) {
-    if (daftarLayaniAbortCtrl?.signal?.aborted) break;
+  const maxConcurrent = Math.max(1, Math.min(5, Number(options.concurrentLimit) || 1));
+  const allowDomFallback = maxConcurrent === 1;
+  const interFormDelayMs = maxConcurrent > 1 ? 650 : 400;
 
-    const curJob = daftarLayaniQueue.shift();
+  const processOneDaftarLayaniJob = async (curJob) => {
     const pIndex = curJob.index ?? 0;
     const patient = { ...curJob };
     const dryRun = !!options.dryRun;
@@ -826,7 +827,7 @@ async function dispatchDaftarLayaniQueue(options = {}) {
             message: regRes.message || "Valid (Dry Run)"
           }).catch(() => {});
           await new Promise(r => setTimeout(r, options.delayMs || 1000));
-          continue;
+          return;
         }
 
         if (regRes.status === "already-screened") {
@@ -857,7 +858,7 @@ async function dispatchDaftarLayaniQueue(options = {}) {
             message: regRes.message || "Individu sudah menerima layanan"
           }).catch(() => {});
           await new Promise(r => setTimeout(r, options.delayMs || 1000));
-          continue;
+          return;
         }
 
         if (regRes.status !== "done") {
@@ -955,10 +956,10 @@ async function dispatchDaftarLayaniQueue(options = {}) {
       }
 
       await new Promise(r => setTimeout(r, options.delayMs || 1000));
-      continue;
+      return;
     }
 
-    if (daftarLayaniAbortCtrl?.signal?.aborted || !daftarLayaniRunning) break;
+    if (daftarLayaniAbortCtrl?.signal?.aborted || !daftarLayaniRunning) return;
 
     // ── TAHAP 2: LANGSUNG PELAYANAN PEMERIKSAAN ─────────────────────────────
     chrome.runtime.sendMessage({
@@ -1005,7 +1006,9 @@ async function dispatchDaftarLayaniQueue(options = {}) {
       const apiRules = await o(apiPatientData, nrApi ?? {});
 
       let isSuccess = false;
+      let usedDomFallback = false;
       let patientData = apiPatientData;
+      let lastApiError = "";
 
       // Jalur Utama: 100% API (tanpa DOM/klik browser)
       if (!options.forceDomPelayanan) {
@@ -1019,6 +1022,7 @@ async function dispatchDaftarLayaniQueue(options = {}) {
             screeningDate: options.screeningDate || patient.screening_date || null,
             dryRun: false,
             fieldRules: apiRules,
+            interFormDelayMs,
             onProgress: (idx, total, title) => {
               const pct = total > 0 ? Math.round(((idx + 1) / total) * 100) : 0;
               chrome.runtime.sendMessage({
@@ -1039,15 +1043,23 @@ async function dispatchDaftarLayaniQueue(options = {}) {
             isSuccess = true;
             console.log(`[daftarLayani] Pelayanan API selesai (${apiRes.submittedCount} form): ${patient.nama}`);
           } else {
-            console.warn(`[daftarLayani] Pelayanan API belum penuh (${apiRes?.status}), fallback ke DOM:`, apiRes?.failedForms);
+            const failedNames = (apiRes?.failedForms || []).map(f => `${f.name}: ${f.error}`).join("; ");
+            lastApiError = failedNames || `API belum penuh (${apiRes?.status})`;
+            console.warn(`[daftarLayani] Pelayanan API belum penuh (${apiRes?.status}):`, apiRes?.failedForms);
           }
         } catch (apiErr) {
-          console.warn(`[daftarLayani] Pelayanan API gagal, fallback ke DOM:`, apiErr.message);
+          lastApiError = apiErr?.message || String(apiErr);
+          console.warn(`[daftarLayani] Pelayanan API gagal:`, lastApiError);
         }
       }
 
-      // Jalur Fallback DOM jika API gagal / partial
+      if (!isSuccess && !allowDomFallback) {
+        throw new Error(lastApiError || "Pelayanan API gagal (mode paralel tanpa DOM)");
+      }
+
+      // Jalur Fallback DOM jika API gagal / partial (hanya saat paralel === 1)
       if (!isSuccess) {
+        usedDomFallback = true;
         // 1. Pastikan tab berada di halaman ckg-pelayanan yang sesuai
         const currentTab = await chrome.tabs.get(tabId).catch(() => null);
         const isCorrectUrl = currentTab?.url && currentTab.url.includes(isSchool ? "ckg-pelayanan-sekolah" : "ckg-pelayanan");
@@ -1192,9 +1204,11 @@ async function dispatchDaftarLayaniQueue(options = {}) {
         message: "Selesai Pelayanan!"
       }).catch(() => {});
 
-      // Kembali ke tabel pelayanan untuk antrean berikutnya
-      await returnToPelayananTable(tabId);
-      await new Promise(r => setTimeout(r, options.delayMs || 1500));
+      // Kembali ke tabel pelayanan hanya jika tadi memakai jalur DOM fallback
+      if (usedDomFallback) {
+        await returnToPelayananTable(tabId);
+      }
+      await new Promise(r => setTimeout(r, options.delayMs || (maxConcurrent > 1 ? 600 : 1200)));
 
     } catch (layaniErr) {
       stats.error++;
@@ -1223,12 +1237,29 @@ async function dispatchDaftarLayaniQueue(options = {}) {
         message: layaniErr.message
       }).catch(() => {});
 
-      try {
-        await returnToPelayananTable(tabId);
-        await new Promise(r => setTimeout(r, 1200));
-      } catch (_) {}
+      if (allowDomFallback) {
+        try {
+          await returnToPelayananTable(tabId);
+          await new Promise(r => setTimeout(r, 1200));
+        } catch (_) {}
+      }
     }
-  }
+  };
+
+  const workerCount = Math.min(maxConcurrent, daftarLayaniQueue.length || 1);
+  await Promise.all(
+    Array.from({ length: workerCount }, (_, wIdx) => (async () => {
+      if (wIdx > 0) {
+        await new Promise(r => setTimeout(r, wIdx * 600));
+      }
+      while (daftarLayaniQueue.length > 0 && daftarLayaniRunning) {
+        if (daftarLayaniAbortCtrl?.signal?.aborted) break;
+        const job = daftarLayaniQueue.shift();
+        if (!job) break;
+        await processOneDaftarLayaniJob(job);
+      }
+    })())
+  );
 
   const wasStopped = !daftarLayaniRunning || !!daftarLayaniAbortCtrl?.signal?.aborted;
 
@@ -2135,12 +2166,12 @@ async function D(s) {
     }
 
     case "RUN_DAFTAR_LAYANI_BATCH": {
-      const { rows = [], category = "UMUM", screeningDate = "", delayMs = 1500, dryRun = false } = s;
+      const { rows = [], category = "UMUM", screeningDate = "", delayMs = 1500, concurrentLimit = 1, dryRun = false } = s;
       daftarLayaniQueue = [...rows];
       daftarLayaniRunning = true;
       await chrome.storage.session.set({ daftarLayaniRunning: true });
       setTimeout(() => {
-        dispatchDaftarLayaniQueue({ category, screeningDate, delayMs, dryRun }).catch(e => console.error("[RUN_DAFTAR_LAYANI_BATCH] error:", e));
+        dispatchDaftarLayaniQueue({ category, screeningDate, delayMs, concurrentLimit, dryRun }).catch(e => console.error("[RUN_DAFTAR_LAYANI_BATCH] error:", e));
       }, 50);
       return { ok: true };
     }

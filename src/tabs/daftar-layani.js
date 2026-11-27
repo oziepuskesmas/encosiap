@@ -58,13 +58,17 @@ export function initDaftarLayani() {
           </div>
 
           <div class="dl-config-row">
-            <div class="dl-config-col" style="flex: 1.3;">
-              <label class="field__label" for="dl-screening-date" style="font-size: 10.5px; margin-bottom: 3px; display: block;">Tanggal Pemeriksaan</label>
+            <div class="dl-config-col" style="flex: 1.2;">
+              <label class="field__label" for="dl-screening-date" style="font-size: 10.5px; margin-bottom: 3px; display: block;">Tanggal</label>
               <input type="date" id="dl-screening-date" class="field__input" style="font-size: 11px; height: 32px; width: 100%;">
             </div>
-            <div class="dl-config-col" style="flex: 0.7;">
-              <label class="field__label" for="dl-delay" style="font-size: 10.5px; margin-bottom: 3px; display: block;">Jeda (detik)</label>
+            <div class="dl-config-col" style="flex: 0.65;">
+              <label class="field__label" for="dl-delay" style="font-size: 10.5px; margin-bottom: 3px; display: block;">Jeda (dtk)</label>
               <input type="number" id="dl-delay" class="field__input" min="0.5" max="10" step="0.5" value="1.5" style="font-size: 11px; height: 32px; width: 100%;">
+            </div>
+            <div class="dl-config-col" style="flex: 0.65;">
+              <label class="field__label" for="dl-concurrent" style="font-size: 10.5px; margin-bottom: 3px; display: block;">Paralel</label>
+              <input type="number" id="dl-concurrent" class="field__input" min="1" max="5" step="1" value="1" title="Jumlah pasien diproses bersamaan via API (1-5, tanpa DOM)" style="font-size: 11px; height: 32px; width: 100%;">
             </div>
           </div>
 
@@ -167,6 +171,7 @@ export function initDaftarLayani() {
   const selCategory = container.querySelector("#dl-category");
   const inputDate = container.querySelector("#dl-screening-date");
   const inputDelay = container.querySelector("#dl-delay");
+  const inputConcurrent = container.querySelector("#dl-concurrent");
   const chkDryRun = container.querySelector("#dl-dry-run");
   const btnPickExcel = container.querySelector("#dl-btn-pick-excel");
   const btnFetchBankot = container.querySelector("#dl-btn-fetch-bankot");
@@ -207,6 +212,7 @@ export function initDaftarLayani() {
         category: selCategory.value,
         screeningDate: inputDate.value,
         delay: inputDelay.value,
+        concurrent: inputConcurrent?.value || "1",
         dryRun: chkDryRun.checked,
         isSetupCollapsed
       }
@@ -808,6 +814,9 @@ export function initDaftarLayani() {
 
     const category = selCategory.value;
     const delayMs = Math.round(1000 * parseFloat(inputDelay.value || "1.5"));
+    const rawConc = parseInt(inputConcurrent?.value || "1", 10);
+    const concurrentLimit = isNaN(rawConc) || rawConc < 1 ? 1 : rawConc > 5 ? 5 : rawConc;
+    if (inputConcurrent) inputConcurrent.value = String(concurrentLimit);
 
     const filterLabelMap = {
       all: "Semua Belum Selesai",
@@ -869,6 +878,7 @@ export function initDaftarLayani() {
         category,
         screeningDate,
         delayMs,
+        concurrentLimit,
         dryRun
       });
 
@@ -999,6 +1009,10 @@ export function initDaftarLayani() {
       if (data.category) selCategory.value = data.category;
       if (data.screeningDate) inputDate.value = data.screeningDate;
       if (data.delay) inputDelay.value = data.delay;
+      if (data.concurrent && inputConcurrent) {
+        const c = parseInt(data.concurrent, 10);
+        inputConcurrent.value = String(isNaN(c) || c < 1 ? 1 : c > 5 ? 5 : c);
+      }
       if (typeof data.dryRun === "boolean") chkDryRun.checked = data.dryRun;
       if (typeof data.isSetupCollapsed === "boolean") isSetupCollapsed = data.isSetupCollapsed;
       applySetupVisibility();
