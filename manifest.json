@@ -1,0 +1,61 @@
+{
+   "action": {
+      "default_icon": {
+         "128": "icons/icon128.png",
+         "16": "icons/icon16.png",
+         "48": "icons/icon48.png"
+      },
+      "default_popup": "popup.html",
+      "default_title": "ENCO"
+   },
+   "background": {
+      "service_worker": "src/background.js",
+      "type": "module"
+   },
+   "content_scripts": [ {
+      "js": [ "src/interceptor.js" ],
+      "matches": [ "https://sehatindonesiaku.kemkes.go.id/*" ],
+      "run_at": "document_start",
+      "world": "MAIN"
+   }, {
+      "js": [ "src/interceptor-relay.js" ],
+      "matches": [ "https://sehatindonesiaku.kemkes.go.id/*" ],
+      "run_at": "document_start"
+   } ],
+   "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'"
+   },
+   "description": "ENCO - Aplikasi Entry CKG Otomatis yang dibuat oleh Mochamad Fauzie, S.Gz",
+   "host_permissions": [
+      "https://ckgbankot.web.id/*",
+      "https://sehatindonesiaku.kemkes.go.id/*",
+      "https://form.kemkes.go.id/*",
+      "https://1.1.1.1/*",
+      "https://dns.google/*",
+      "https://www.google.com/*",
+      "https://ipwho.is/*",
+      "https://api.ipify.org/*",
+      "https://api.relayrouter.ai/*",
+      "https://generativelanguage.googleapis.com/*"
+   ],
+   "icons": {
+      "128": "icons/icon128.png",
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAruae1PSCwpGH0jzETvez+P2zOaHINw/PzsW7aFwHjeqafMXRnocwExUesAduGGbhr97J5FuOwHXzyy49fdvP33eFlHuZOC0I7FA1r38dXVMfhM8G44ry4hOobQCfwmbkv4mDLoynpHrOVrzhyXEIv0uu+87OtmWf0TLqcgb8shvZN4eprTufLXSo2+WnKBDvrFz53Uzr4sXM92nAZZt5YWgLvG+/GDlkUiK9Mxip9niaWp6cU5mPehma1In5U16z/EKo0N7XeD1pyhFLEUact4n6QMvNOAr+UcOu5MlvwqXaVONWo5r9mFBIoEqZN4fLO41wkrea0yQk/h4pI56jrQIDAQAB",
+   "manifest_version": 3,
+   "name": "ENCO",
+   "permissions": [ "activeTab", "storage", "scripting", "tabs", "identity", "alarms", "debugger", "proxy", "sidePanel" ],
+   "side_panel": {
+      "default_path": "popup.html?panel=true"
+   },
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "1.0.0",
+   "web_accessible_resources": [
+      {
+         "resources": [ "TEMPLATE BOT CKG.xlsx", "TEMPLATE BOT CKG SEKOLAH.xlsx", "template/*" ],
+         "matches": [ "<all_urls>" ]
+      }
+   ]
+}

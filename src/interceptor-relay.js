@@ -1,0 +1,1 @@
+window.addEventListener("message",e=>{if(e.source!==window||!e.data?.__ckg)return;const{type:a,data:t}=e.data;"CKG_USER_ME"===a&&chrome.runtime.sendMessage({type:a,data:t}).catch(()=>{})});

@@ -1,0 +1,1665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>ENCO - Entry CKG Otomatis</title>
+    <script src="src/viewport-init.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/styles/popup.css" />
+  </head>
+  <body>
+    <!-- ── ENCO Gatekeeper Login Screen ───────────────────────────── -->
+    <div id="enco-login-screen" class="enco-login-screen" style="display: none;">
+      <div class="enco-login-container">
+        
+        <!-- Logo & Branding -->
+        <div class="enco-login-header">
+          <div class="enco-login-avatar-wrap">
+            <img src="icons/icon128.png" alt="ENCO" class="enco-login-avatar" />
+            <span class="enco-login-avatar-ring"></span>
+          </div>
+
+          <div class="enco-login-status-badge">
+            <span class="pulse-dot"></span>
+            <span>CONNECTED</span>
+          </div>
+
+          <h1 class="enco-login-title">ENCO</h1>
+          <p class="enco-login-subtitle">Entry CKG &amp; ASIK Otomatis</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="enco-login-card">
+          <div class="enco-login-card__top">
+            <div class="enco-login-card__icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M12 8v4"/>
+                <path d="M12 16h.01"/>
+              </svg>
+            </div>
+            <div class="enco-login-card__heading">
+              <div class="enco-login-card__title">Login Petugas Puskesmas</div>
+              <div class="enco-login-card__sub">Terhubung ke database ckgbankot.web.id</div>
+            </div>
+          </div>
+
+          <!-- Alert message box -->
+          <div id="enco-login-alert" class="enco-login-alert" style="display: none;"></div>
+
+          <!-- Form Pegawai -->
+          <form id="enco-login-form" class="enco-login-form">
+            <!-- User Select -->
+            <div class="enco-login-field">
+              <label for="enco-login-select-user" class="enco-login-label">
+                Nama Pegawai / Petugas:
+              </label>
+              <div class="enco-login-input-wrap">
+                <svg class="enco-login-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <select id="enco-login-select-user" class="enco-login-select" required>
+                  <option value="">-- Memuat Data Pegawai... --</option>
+                </select>
+                <span class="enco-login-select-arrow">▾</span>
+              </div>
+            </div>
+
+            <!-- Password Field -->
+            <div id="enco-login-pass-group" class="enco-login-field">
+              <div class="enco-login-label-row">
+                <label for="enco-login-password" class="enco-login-label">
+                  Kata Sandi:
+                </label>
+                <span id="enco-pass-hint" class="enco-pass-hint">(Wajib jika akun berpassword)</span>
+              </div>
+              <div class="enco-login-input-wrap">
+                <svg class="enco-login-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" id="enco-login-password" class="enco-login-input" placeholder="Masukkan kata sandi database..." />
+                <button type="button" id="btn-toggle-login-pass" class="enco-login-eye-btn" title="Tampilkan sandi" aria-label="Lihat kata sandi">
+                  <svg id="icon-eye-show" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg id="icon-eye-hide" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="btn-enco-login-submit" class="enco-login-btn">
+              <span>MASUK KE ENCO</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+              <span id="enco-login-spinner" style="display: none;">⏳</span>
+            </button>
+          </form>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="enco-login-footer">
+          <span class="enco-login-author">Create by: Mochamad Fauzie, S.Gz</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Main Screen ────────────────────────────────────────── -->
+    <div id="main-screen">
+      <!-- ── Network Ping Realtime HUD (Top Bar) ───────────────── -->
+      <div id="ping-monitor-box" class="ping-monitor-box">
+        <div class="ping-monitor__grid">
+          <!-- 1. Google: 8.8.8.8 -->
+          <div id="ping-target-google" class="ping-card ping-card--checking" title="Google: 8.8.8.8">
+            <div class="ping-card__left">
+              <svg class="ping-card__logo" viewBox="0 0 48 48" width="13" height="13" aria-hidden="true">
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              </svg>
+              <div class="ping-card__info">
+                <span class="ping-card__name">Google</span>
+                <span class="ping-card__ip">8.8.8.8</span>
+              </div>
+            </div>
+            <div class="ping-card__right">
+              <span id="ping-latency-google" class="ping-card__latency">-- ms</span>
+              <span class="ping-card__dot"></span>
+            </div>
+          </div>
+
+          <!-- 2. Kemkes / ASIK -->
+          <div id="ping-target-kemkes" class="ping-card ping-card--checking" title="Sehat Indonesiaku: 35.219.38.230">
+            <div class="ping-card__left">
+              <img src="icons/kemenkes.png" alt="Kemenkes" class="ping-card__logo" />
+              <div class="ping-card__info">
+                <span class="ping-card__name">Kemkes</span>
+                <span class="ping-card__ip">35.219.38.230</span>
+              </div>
+            </div>
+            <div class="ping-card__right">
+              <span id="ping-latency-kemkes" class="ping-card__latency">-- ms</span>
+              <span class="ping-card__dot"></span>
+            </div>
+          </div>
+
+          <!-- 3. Cloudflare: 1.1.1.1 -->
+          <div id="ping-target-cloudflare" class="ping-card ping-card--checking" title="Cloudflare: 1.1.1.1">
+            <div class="ping-card__left">
+              <svg class="ping-card__logo" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                <path fill="#F38020" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                <path fill="#FAAD3F" d="M18.8 13.5c-.3 0-.6.1-.8.2-.8-2.6-3.2-4.5-6-4.5-3 0-5.6 2.1-6.2 5.1-2 .3-3.5 2-3.5 4.1 0 2.3 1.9 4.1 4.1 4.1h12.5c2.1 0 3.8-1.7 3.8-3.8 0-2.9-2-5.2-3.9-5.2z"/>
+              </svg>
+              <div class="ping-card__info">
+                <span class="ping-card__name">Cloud</span>
+                <span class="ping-card__ip">1.1.1.1</span>
+              </div>
+            </div>
+            <div class="ping-card__right">
+              <span id="ping-latency-cloudflare" class="ping-card__latency">-- ms</span>
+              <span class="ping-card__dot"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Refresh Ping Button (Only Icon, No Text) -->
+        <button id="btn-refresh-ping" class="btn-refresh-ping" type="button" title="Refresh Ping" aria-label="Refresh Ping">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- ── Session Keep-Alive Status Bar (Heartbeat Ping) ──── -->
+      <div id="session-heartbeat-hud" class="session-heartbeat-hud" title="Status Sesi Sehat Indonesiaku (Klik untuk buka/refresh tab ASIK)">
+        <div class="session-heartbeat__left">
+          <span class="session-heartbeat__dot session-heartbeat__dot--unknown" id="session-heartbeat-dot"></span>
+          <span class="session-heartbeat__title">SESI ASIK:</span>
+          <span class="session-heartbeat__text" id="session-heartbeat-text">Memeriksa sesi...</span>
+        </div>
+        <div class="session-heartbeat__right">
+          <button id="btn-login-asik-hud" class="session-heartbeat__login-btn" type="button" hidden style="font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.55); background: rgba(2, 132, 199, 0.35); color: #f8fafc; cursor: pointer; white-space: nowrap;">
+            Login ASIK
+          </button>
+          <span class="session-heartbeat__time" id="session-heartbeat-time">--</span>
+          <button id="btn-ping-session-hud" class="session-heartbeat__btn" type="button" title="Ping Sesi Sekarang" aria-label="Ping Sesi Sekarang">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── ENCO Officer Info & Logout Bar ─────────────────────── -->
+      <div id="enco-officer-bar" class="enco-officer-bar" style="display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 5px 10px; margin: 4px 8px 8px 8px; font-size: 11px;">
+        <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+          <span style="color: #38bdf8;">👤</span>
+          <span style="color: #94a3b8; font-weight: 600;">PETUGAS:</span>
+          <span id="enco-active-officer-name" style="color: #f1f5f9; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;">-</span>
+        </div>
+        <button id="btn-enco-logout-trigger" type="button" title="Keluar / Ganti Petugas" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; cursor: pointer;">
+          Keluar
+        </button>
+      </div>
+
+      <!-- ── Mobile Smart Notification Banner ─────────────────── -->
+      <div id="mobile-tab-banner" class="mobile-tab-banner" hidden>
+        <div class="mobile-tab-banner__content">
+          <span class="mobile-tab-banner__icon">📱</span>
+          <span class="mobile-tab-banner__text">Gunakan <strong>Mode Tab Penuh</strong> agar upload Excel &amp; otomasi tidak tertutup saat membuka aplikasi lain di HP.</span>
+        </div>
+        <div class="mobile-tab-banner__actions">
+          <button id="btn-banner-open-tab" class="mobile-tab-banner__btn" type="button">Buka Tab</button>
+          <button id="btn-banner-close" class="mobile-tab-banner__close" type="button" aria-label="Tutup Banner">✕</button>
+        </div>
+      </div>
+
+      <div id="popup-layout" class="popup-layout">
+        <div class="popup">
+        <header class="popup__header">
+          <div class="header-top">
+            <div class="header-brand">
+              <div class="header-brand-logo-row">
+                <div class="header-avatar-wrap">
+                  <img src="icons/icon48.png" alt="ENCO" class="header-avatar-img" />
+                  <span class="header-pulse-glow"></span>
+                </div>
+                <div class="header-brand-title-wrap">
+                  <div class="header-title-flex">
+                    <h1 class="popup__title">ENCO</h1>
+                    <span class="header-status-badge">
+                      <span class="pulse-dot"></span>
+                      <span>Siap</span>
+                    </span>
+                  </div>
+                  <p class="popup__subtitle">Entry CKG Otomatis</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="header-actions">
+              <button
+                id="btn-reload-extension"
+                class="btn-reload-extension"
+                type="button"
+                title="Refresh Ekstensi"
+                aria-label="Refresh Ekstensi"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+              </button>
+              <button
+                id="btn-open-sidepanel"
+                class="btn-open-sidepanel"
+                type="button"
+                title="Buka di Panel Samping (Side Panel Kanan)"
+                aria-label="Buka di Panel Samping"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="15" y1="3" x2="15" y2="21"></line>
+                </svg>
+                <span>Panel Kanan</span>
+              </button>
+              <button
+                id="btn-open-tab-mode"
+                class="btn-open-tab-mode"
+                type="button"
+                title="Buka Ekstensi di Tab Baru (Disarankan untuk HP / Smartphone)"
+                aria-label="Buka Ekstensi di Tab Baru"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                <span>Tab Penuh</span>
+              </button>
+              <button
+                id="btn-toggle-report"
+                class="btn-toggle-report"
+                type="button"
+                title="Buka Laporan Hasil & Analisis Error"
+                aria-label="Buka Laporan Data"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <path d="M9 15l2 2 4-4"></path>
+                </svg>
+                <span id="report-header-badge" class="report-header-badge" hidden>0</span>
+              </button>
+              <button
+                id="btn-toggle-history"
+                class="btn-toggle-history"
+                type="button"
+                title="Buka Riwayat Log"
+                aria-label="Buka Riwayat Log"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <polyline points="3 3 3 8 8 8"/>
+                  <polyline points="12 7 12 12 15 15"/>
+                </svg>
+                <span id="history-header-badge" class="history-header-badge" hidden>0</span>
+              </button>
+            </div>
+
+            <div id="user-info" class="user-info" style="display: none !important;">
+              <button
+                id="user-avatar-btn"
+                class="user-avatar-btn"
+                type="button"
+                aria-label="User info"
+                aria-expanded="false"
+              >
+                <img id="user-avatar" class="user-avatar" alt="User avatar" />
+                <div id="quota-popover" class="quota-popover" hidden>
+                  <p id="quota-popover-name" class="quota-popover__name"></p>
+                  <div class="quota-popover__row">
+                    <span id="quota-value" class="quota-popover__badge">—</span>
+                  </div>
+                  <hr class="quota-popover__divider" />
+                  <a
+                    id="btn-go-dashboard"
+                    class="quota-popover__request-btn quota-popover__request-btn--mono"
+                    href="https://ckg.sayureri.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Dashboard
+                  </a>
+                  <hr class="quota-popover__divider" />
+                  <p class="quota-popover__request-text">Punya ide untuk fitur baru? Atau ingin memberikan masukan?</p>
+                  <a
+                    id="btn-request-feature"
+                    class="quota-popover__request-btn"
+                    href="https://wa.me/6285727643706?text=Halo%2C%20saya%20ingin%20mengusulkan%20fitur%20untuk%20CKG%20Automation%3A"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    Request Fitur
+                  </a>
+                </div>
+              </button>
+              <span id="user-name" class="user-name"></span>
+            </div>
+          </div>
+        </header>
+
+        <!-- ── Subpage Navigation Bar (Shown when inside a feature) ── -->
+        <div id="subpage-bar" class="subpage-bar" hidden>
+          <button id="btn-back-to-menu" class="btn-back-to-menu" type="button" title="Kembali ke Menu Utama">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Menu Utama</span>
+          </button>
+          <div class="subpage-title-wrap">
+            <span id="subpage-title" class="subpage-title">PELAYANAN</span>
+          </div>
+        </div>
+
+        <main class="popup__body">
+          <!-- ── Home Screen: Cyberpunk Metro Tile Dashboard ─────── -->
+          <div id="tab-home" class="menu-dashboard-panel">
+            <div class="menu-dashboard-header">
+              <span class="menu-dashboard-header__tag">MENU UTAMA</span>
+              <p class="menu-dashboard-header__subtitle">Pilih menu otomasi untuk memulai</p>
+            </div>
+            <div class="menu-dashboard-grid">
+              <!-- Tile Utama (Wide): Daftar & Layani (One-Stop CKG) -->
+              <button class="metro-tile metro-tile--sky metro-tile--wide" data-tab="daftar-layani" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <polyline points="14 17 18 21 23 16"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span class="metro-tile__title">Daftar &amp; Layani</span>
+                    <span class="vpn-status-pill" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">ONE-STOP</span>
+                  </div>
+                  <span class="metro-tile__desc">Daftar Baru + Langsung Selesaikan Pemeriksaan</span>
+                </div>
+                <span class="metro-tile__indicator" data-tab-indicator="daftar-layani"></span>
+              </button>
+
+              <!-- Tile 1: Pendaftaran -->
+              <button class="metro-tile metro-tile--blue" data-tab="pendaftaran" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <span class="metro-tile__title">Pendaftaran</span>
+                  <span class="metro-tile__desc">Entry Pasien CKG</span>
+                </div>
+                <span class="metro-tile__indicator" data-tab-indicator="pendaftaran"></span>
+              </button>
+
+              <!-- Tile 2: Pasien (Pelayanan Instan) -->
+              <button class="metro-tile metro-tile--sky" data-tab="pelayanan-instan" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <span class="metro-tile__title">Pasien</span>
+                  <span class="metro-tile__desc">Pelayanan Instan</span>
+                </div>
+                <span class="metro-tile__indicator" data-tab-indicator="pelayanan-instan"></span>
+              </button>
+
+              <!-- Tile 3: Pelayanan (Otomasi Utama) -->
+              <button class="metro-tile metro-tile--cyan" data-tab="otomasi" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <span class="metro-tile__title">Pelayanan</span>
+                  <span class="metro-tile__desc">Otomasi CKG Utama</span>
+                </div>
+                <span class="metro-tile__indicator" data-tab-indicator="otomasi"></span>
+              </button>
+
+              <!-- Tile 4: Tools -->
+              <button class="metro-tile metro-tile--indigo" data-tab="tools" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <span class="metro-tile__title">Tools</span>
+                  <span class="metro-tile__desc">Form, Nakes &amp; Anti-429</span>
+                </div>
+              </button>
+
+              <!-- Tile 5 (Wide): Pengaturan -->
+              <button class="metro-tile metro-tile--slate metro-tile--wide" data-tab="pengaturan" type="button">
+                <div class="metro-tile__icon-wrap">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                </div>
+                <div class="metro-tile__content">
+                  <span class="metro-tile__title">Pengaturan</span>
+                  <span class="metro-tile__desc">Delay &amp; Opsi Bot</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <div id="tab-pendaftaran" class="tab-panel" hidden>
+            <!-- ── Mode Selection Screen for Pendaftaran (Umum vs Sekolah) ── -->
+            <div id="pendaftaran-mode-selection" class="pelayanan-mode-selection">
+              <div class="pelayanan-mode-header">
+                <span class="pelayanan-mode-header__tag">KATEGORI SASARAN</span>
+                <h2 class="pelayanan-mode-header__title">Pilih Kategori:</h2>
+                <p class="pelayanan-mode-header__subtitle">Pilih jenis sasaran pendaftaran CKG</p>
+              </div>
+
+              <div class="pelayanan-mode-grid">
+                <!-- Tombol 1: Umum -->
+                <button id="btn-select-pendaftaran-umum" class="pelayanan-mode-card pelayanan-mode-card--system" type="button">
+                  <div class="pelayanan-mode-card__top">
+                    <div class="pelayanan-mode-card__icon-wrap">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                    </div>
+                    <span class="pelayanan-mode-card__badge">INDIVIDU / UMUM</span>
+                  </div>
+                  <div class="pelayanan-mode-card__body">
+                    <h3 class="pelayanan-mode-card__title">Umum</h3>
+                    <p class="pelayanan-mode-card__desc">Pendaftaran CKG untuk masyarakat umum (dewasa & lansia)</p>
+                  </div>
+                  <div class="pelayanan-mode-card__action">
+                    <span>PILIH UMUM</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </button>
+
+                <!-- Tombol 2: Sekolah -->
+                <button id="btn-select-pendaftaran-sekolah" class="pelayanan-mode-card pelayanan-mode-card--emerald" type="button">
+                  <div class="pelayanan-mode-card__top">
+                    <div class="pelayanan-mode-card__icon-wrap">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                      </svg>
+                    </div>
+                    <span class="pelayanan-mode-card__badge pelayanan-mode-card__badge--emerald">ANAK SEKOLAH</span>
+                  </div>
+                  <div class="pelayanan-mode-card__body">
+                    <h3 class="pelayanan-mode-card__title">Sekolah</h3>
+                    <p class="pelayanan-mode-card__desc">Pendaftaran CKG khusus siswa anak sekolah (SD, SMP, SMA)</p>
+                  </div>
+                  <div class="pelayanan-mode-card__action">
+                    <span>PILIH SEKOLAH</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- ── Session Selection Screen for Pendaftaran (Load Log vs Sesi Baru) ── -->
+            <div id="pendaftaran-session-selection" class="pelayanan-mode-selection" hidden>
+              <div class="pelayanan-mode-header">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                  <span class="pelayanan-mode-header__tag" id="pendaftaran-session-target-tag">PENDAFTARAN UMUM</span>
+                  <button id="btn-pendaftaran-back-to-mode" class="btn-switch-mode" type="button" style="padding: 2px 7px;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Kategori</span>
+                  </button>
+                </div>
+                <h2 class="pelayanan-mode-header__title">Pilih Sesi Otomasi:</h2>
+                <p class="pelayanan-mode-header__subtitle">Lanjutkan sesi antrean dari Cloud R2 atau buat sesi baru</p>
+              </div>
+
+              <div id="pendaftaran-session-cards-wrap" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Card 1: Sesi Aktif / Terakhir -->
+                <div id="card-pendaftaran-last-session" class="session-picker-card session-picker-card--active">
+                  <div class="session-picker-card__header">
+                    <span class="session-picker-card__badge">🟢 SESI AKTIF (CLOUD R2)</span>
+                    <span id="session-picker-time" class="session-picker-card__time">-</span>
+                  </div>
+                  <div class="session-picker-card__body">
+                    <div id="session-picker-filename" class="session-picker-card__filename">Memuat sesi dari Cloud...</div>
+                    <div id="session-picker-stats" class="session-picker-card__stats">
+                      <span class="session-stat-pill session-stat-pill--success"><i class="bi bi-check-circle"></i> Selesai: <strong id="session-stat-done">0</strong></span>
+                      <span class="session-stat-pill session-stat-pill--warning"><i class="bi bi-exclamation-triangle"></i> Pernah: <strong id="session-stat-warning">0</strong></span>
+                      <span class="session-stat-pill session-stat-pill--danger"><i class="bi bi-x-circle"></i> Gagal: <strong id="session-stat-error">0</strong></span>
+                      <span class="session-stat-pill session-stat-pill--info"><i class="bi bi-hourglass-split"></i> Sisa: <strong id="session-stat-remaining">0</strong></span>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px; width: 100%;">
+                    <button id="btn-pendaftaran-resume-session" class="btn-session-action btn-session-action--resume" type="button" style="flex: 1;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      <span>LANJUTKAN SESI INI</span>
+                    </button>
+                    <button id="btn-pendaftaran-delete-active-session" class="btn-session-action btn-session-action--delete" type="button" title="Hapus sesi ini dari Cloud R2 & Database" style="width: 38px; padding: 0; flex: none;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="session-picker-divider">
+                  <span>ATAU</span>
+                </div>
+
+                <!-- Card 2: Buat Sesi Baru -->
+                <div id="card-pendaftaran-new-session" class="session-picker-card session-picker-card--new">
+                  <div class="session-picker-card__header">
+                    <span class="session-picker-card__badge session-picker-card__badge--new">➕ SESI BARU</span>
+                  </div>
+                  <div class="session-picker-card__body">
+                    <div class="session-picker-card__filename">Mulai Dari Awal (Upload Excel Baru)</div>
+                    <p class="session-picker-card__desc">Kosongkan antrean sebelumnya dan buat sesi ID baru dengan upload file Excel .xlsx</p>
+                  </div>
+                  <button id="btn-pendaftaran-new-session" class="btn-session-action btn-session-action--new" type="button">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    <span>BUAT SESI BARU</span>
+                  </button>
+                </div>
+
+                <!-- Card 3: Ambil Data dari CKG Bankot -->
+                <div id="card-pendaftaran-ckgbankot" class="session-picker-card session-picker-card--cloud" style="border: 1.5px solid #0284c7; background: rgba(2, 132, 199, 0.08);">
+                  <div class="session-picker-card__header">
+                    <span class="session-picker-card__badge" style="background: #0284c7; color: #fff;">☁️ CLOUD CKG BANKOT</span>
+                  </div>
+                  <div class="session-picker-card__body">
+                    <div class="session-picker-card__filename">Ambil Data dari CKG Bankot</div>
+                    <p class="session-picker-card__desc">Tarik data antrean pendaftaran langsung dari Cloud CKG Bankot (CKG Umum atau CKG Sekolah)</p>
+                  </div>
+                  <button id="btn-pendaftaran-pick-ckgbankot" class="btn-session-action btn-session-action--resume" type="button" style="background: linear-gradient(135deg, #0284c7, #2563eb);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="8 14 12 18 16 14"/><line x1="12" y1="10" x2="12" y2="18"/></svg>
+                    <span>AMBIL DARI CKG BANKOT</span>
+                  </button>
+                </div>
+
+                <!-- Section 3: Dropdown Riwayat Sesi Lainnya -->
+                <div id="section-pendaftaran-other-sessions" class="session-picker-older" style="margin-top: 4px;" hidden>
+                  <span class="session-picker-older__label">📂 Riwayat Sesi Lainnya di Cloud:</span>
+                  <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+                    <select id="select-pendaftaran-older-sessions" class="field__select" style="font-size: 11px; padding: 4px 6px; flex: 1;">
+                      <option value="">-- Pilih Sesi Riwayat --</option>
+                    </select>
+                    <button id="btn-pendaftaran-load-older-session" class="btn btn--secondary" type="button" style="font-size: 10px; padding: 5px 8px; white-space: nowrap;">
+                      Muat Sesi
+                    </button>
+                    <button id="btn-pendaftaran-delete-older-session" class="btn btn--danger" type="button" style="font-size: 10px; padding: 5px 8px; white-space: nowrap;" title="Hapus sesi terpilih dari Cloud">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Category Breadcrumb Bar -->
+            <div id="pendaftaran-active-bar" class="pelayanan-active-bar" hidden>
+              <div class="pelayanan-active-bar__left">
+                <span id="pendaftaran-active-badge" class="pelayanan-active-badge">KATEGORI: UMUM</span>
+                <span id="pendaftaran-active-sub" class="pelayanan-active-sub">Pendaftaran Individu</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button id="btn-switch-pendaftaran-session" class="btn-switch-mode" type="button" title="Ganti Sesi / Load Log Sesi">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span>Pilih Sesi</span>
+                </button>
+                <button id="btn-switch-pendaftaran-mode" class="btn-switch-mode" type="button" title="Ganti Kategori Pendaftaran">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+                  <span>Ganti Kategori</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Main Pendaftaran Content (Hidden until category chosen) -->
+            <div id="pendaftaran-main-content" hidden>
+              <!-- Hidden select for compatibility -->
+              <select id="category-filter-pendaftaran" class="field__select" style="display: none !important;">
+                <option value="UMUM">Umum</option>
+                <option value="SEKOLAH">Sekolah</option>
+              </select>
+
+              <!-- Filter Umur & Status Pendaftaran -->
+              <div id="pendaftaran-filter-row" class="filter-controls-row" style="margin-bottom: 8px;" hidden>
+                <div class="select__wrapper filter-select-wrapper">
+                  <select id="age-filter-pendaftaran" class="field__select filter-select">
+                    <option value="ALL">Semua Umur</option>
+                    <option value="anak">🧒 Anak (&lt;10 thn)</option>
+                    <option value="remaja">🧑 Remaja (10-17 thn)</option>
+                    <option value="dewasa">👨 Dewasa (18-59 thn)</option>
+                    <option value="lansia">👴 Lansia (≥60 thn)</option>
+                  </select>
+                  <span class="select__arrow">▾</span>
+                </div>
+                <div class="select__wrapper filter-select-wrapper">
+                  <select id="status-filter-pendaftaran" class="field__select filter-select">
+                    <option value="ALL">📋 Semua Status</option>
+                    <option value="ready">⏳ Menunggu</option>
+                    <option value="selesai">✅ Selesai</option>
+                    <option value="pernah-input">⚠️ Sudah Daftar</option>
+                    <option value="error">❌ Error</option>
+                  </select>
+                  <span class="select__arrow">▾</span>
+                </div>
+              </div>
+
+              <!-- Opsi Lewati Konfirmasi Kehadiran -->
+              <div id="pendaftaran-options-row" class="pendaftaran-options-row" style="margin-bottom: 8px; padding: 2px 4px; display: flex; align-items: center;" hidden>
+                <label class="custom-checkbox-label" style="display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 11.5px; color: var(--text-color, #475569); user-select: none;">
+                  <input type="checkbox" id="check-lewati-konfirmasi-hadir" style="cursor: pointer; width: 14px; height: 14px; accent-color: #0d9488; margin: 0;">
+                  <span style="font-weight: 500;">Lewati Konfirmasi Kehadiran</span>
+                </label>
+              </div>
+
+              <div
+                id="pendaftaran-empty"
+                class="promo-placeholder promo-placeholder--pendaftaran"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  class="promo-placeholder__icon"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+                <p class="promo-placeholder__heading">Otomasi Pendaftaran CKG</p>
+                <p class="promo-placeholder__body">
+                  Upload file Excel (.xlsx) berisi data pasien untuk mendaftarkan
+                  banyak pasien sekaligus secara otomatis.
+                </p>
+                <p class="promo-placeholder__body" style="margin-top: -4px">
+                  Download template Excel terlebih dahulu, isi data pasien, lalu
+                  upload untuk memulai.
+                </p>
+              </div>
+              <div id="pendaftaran-list" class="pendaftaran-list" hidden>
+                <div class="pendaftaran-list__header">
+                  <span
+                    id="pendaftaran-count"
+                    class="pendaftaran-list__count"
+                  ></span>
+                  <button
+                    id="btn-clear-excel"
+                    class="btn btn--ghost-danger"
+                    type="button"
+                  >
+                    Hapus
+                  </button>
+                </div>
+                <ul id="pendaftaran-patients" class="patient-list"></ul>
+                <!-- Paginasi Antrean Pendaftaran (Max 50 Pasien) -->
+                <div id="pendaftaran-pagination" class="bot-pagination" hidden>
+                  <button id="btn-pendaftaran-prev-page" class="btn-page-nav" type="button" title="Halaman Sebelumnya">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Sebelumnya</span>
+                  </button>
+                  <span id="pendaftaran-page-info" class="page-nav-info"><span>Hal <strong>1</strong>/<strong>1</strong></span> <span class="page-nav-range">(1–50)</span></span>
+                  <button id="btn-pendaftaran-next-page" class="btn-page-nav" type="button" title="Halaman Selanjutnya">
+                    <span>Selanjutnya</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-otomasi" class="tab-panel" hidden>
+            <!-- ── Pelayanan Mode Selection Screen (Isi Otomatis dari:) ── -->
+            <div id="pelayanan-mode-selection" class="pelayanan-mode-selection">
+              <div class="pelayanan-mode-header">
+                <span class="pelayanan-mode-header__tag">METODE OTOMASI</span>
+                <h2 class="pelayanan-mode-header__title">Isi Otomatis dari:</h2>
+                <p class="pelayanan-mode-header__subtitle">Pilih sumber data jawaban skrining pelayanan</p>
+              </div>
+
+              <!-- Container Sesi Aktif Terakhir Pelayanan (jika ada) -->
+              <div id="card-pelayanan-last-session" class="session-picker-card" style="margin-bottom: 14px;" hidden>
+                <div class="session-picker-card__header">
+                  <div class="session-picker-card__icon-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div class="session-picker-card__title-wrap">
+                    <div class="session-picker-card__badge-row">
+                      <span class="session-picker-card__badge">SESI AKTIF TERAKHIR</span>
+                      <span id="session-pelayanan-time" class="session-picker-card__time">-</span>
+                    </div>
+                    <h3 id="session-pelayanan-filename" class="session-picker-card__filename">Memuat sesi dari Cloud R2...</h3>
+                  </div>
+                </div>
+
+                <div class="session-stat-grid">
+                  <div class="session-stat-pill session-stat-pill--done">
+                    <span id="session-pelayanan-stat-done" class="session-stat-pill__num">0</span>
+                    <span class="session-stat-pill__label">Selesai</span>
+                  </div>
+                  <div class="session-stat-pill session-stat-pill--warning">
+                    <span id="session-pelayanan-stat-warning" class="session-stat-pill__num">0</span>
+                    <span class="session-stat-pill__label">Pernah Input</span>
+                  </div>
+                  <div class="session-stat-pill session-stat-pill--error">
+                    <span id="session-pelayanan-stat-error" class="session-stat-pill__num">0</span>
+                    <span class="session-stat-pill__label">Error</span>
+                  </div>
+                  <div class="session-stat-pill session-stat-pill--remaining">
+                    <span id="session-pelayanan-stat-remaining" class="session-stat-pill__num">0</span>
+                    <span class="session-stat-pill__label">Sisa Pasien</span>
+                  </div>
+                </div>
+
+                <div class="session-picker-card__actions" style="margin-top: 10px; display: flex; gap: 8px;">
+                  <button id="btn-pelayanan-resume-session" class="btn-session-action btn-session-action--resume" type="button" style="flex: 1;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>LANJUTKAN SESI INI</span>
+                  </button>
+                  <button id="btn-pelayanan-delete-active-session" class="btn-session-action btn-session-action--delete" type="button" title="Hapus sesi ini dari Cloud R2 & Database" style="width: 38px; padding: 0; flex: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                  </button>
+                </div>
+
+                <!-- Dropdown Riwayat Sesi Pelayanan Sebelumnya -->
+                <div id="section-pelayanan-other-sessions" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255, 255, 255, 0.1);" hidden>
+                  <span style="font-size: 10px; color: #94a3b8; font-weight: 600; display: block; margin-bottom: 4px;">Riwayat Sesi Sebelumnya:</span>
+                  <div style="display: flex; gap: 6px;">
+                    <select id="select-pelayanan-older-sessions" class="form-select" style="font-size: 10.5px; padding: 4px 6px; flex: 1; background: rgba(15, 23, 42, 0.8); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 4px;">
+                    </select>
+                    <button id="btn-pelayanan-load-older-session" class="btn btn--secondary" type="button" style="font-size: 10px; padding: 5px 8px; white-space: nowrap;">
+                      Muat Sesi
+                    </button>
+                    <button id="btn-pelayanan-delete-older-session" class="btn btn--danger" type="button" style="font-size: 10px; padding: 5px 8px; white-space: nowrap;" title="Hapus sesi terpilih dari Cloud">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="divider-pelayanan-session" class="session-picker-divider" style="margin-bottom: 12px;" hidden>
+                <span>ATAU PILIH METODE BARU</span>
+              </div>
+
+              <div class="pelayanan-mode-grid">
+                <!-- Tombol 1: Sistem -->
+                <button id="btn-select-mode-system" class="pelayanan-mode-card pelayanan-mode-card--system" type="button">
+                  <div class="pelayanan-mode-card__top">
+                    <div class="pelayanan-mode-card__icon-wrap">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="2"/>
+                        <rect x="9" y="9" width="6" height="6"/>
+                        <line x1="9" y1="1" x2="9" y2="4"/>
+                        <line x1="15" y1="1" x2="15" y2="4"/>
+                        <line x1="9" y1="20" x2="9" y2="23"/>
+                        <line x1="15" y1="20" x2="15" y2="23"/>
+                        <line x1="20" y1="9" x2="23" y2="9"/>
+                        <line x1="20" y1="14" x2="23" y2="14"/>
+                        <line x1="1" y1="9" x2="4" y2="9"/>
+                        <line x1="1" y1="14" x2="4" y2="14"/>
+                      </svg>
+                    </div>
+                    <span class="pelayanan-mode-card__badge">OTOMATIS NORMAL</span>
+                  </div>
+                  <div class="pelayanan-mode-card__body">
+                    <h3 class="pelayanan-mode-card__title">Sistem</h3>
+                    <p class="pelayanan-mode-card__desc">Data skrining normal acak dibuat otomatis oleh sistem tanpa perlu upload file Excel</p>
+                  </div>
+                  <div class="pelayanan-mode-card__action">
+                    <span>PILIH SISTEM</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </button>
+
+                <!-- Tombol 2: File Excel -->
+                <button id="btn-select-mode-excel" class="pelayanan-mode-card pelayanan-mode-card--excel" type="button">
+                  <div class="pelayanan-mode-card__top">
+                    <div class="pelayanan-mode-card__icon-wrap">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="8" y1="13" x2="16" y2="13"/>
+                        <line x1="8" y1="17" x2="16" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                      </svg>
+                    </div>
+                    <span class="pelayanan-mode-card__badge pelayanan-mode-card__badge--excel">FILE EXCEL</span>
+                  </div>
+                  <div class="pelayanan-mode-card__body">
+                    <h3 class="pelayanan-mode-card__title">File Excel</h3>
+                    <p class="pelayanan-mode-card__desc">Gunakan data pemeriksaan pasien dari file Excel (.xlsx) seperti sistem saat ini</p>
+                  </div>
+                  <div class="pelayanan-mode-card__action">
+                    <span>PILIH FILE EXCEL</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </button>
+
+                <!-- Tombol 3: Ambil dari CKG Bankot -->
+                <button id="btn-select-mode-cloud" class="pelayanan-mode-card pelayanan-mode-card--cloud" type="button" style="border: 1.5px solid #0284c7; background: rgba(2, 132, 199, 0.08);">
+                  <div class="pelayanan-mode-card__top">
+                    <div class="pelayanan-mode-card__icon-wrap" style="color: #0284c7;">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                        <polyline points="8 14 12 18 16 14"/>
+                        <line x1="12" y1="10" x2="12" y2="18"/>
+                      </svg>
+                    </div>
+                    <span class="pelayanan-mode-card__badge" style="background: #0284c7; color: #fff;">CLOUD CKG BANKOT</span>
+                  </div>
+                  <div class="pelayanan-mode-card__body">
+                    <h3 class="pelayanan-mode-card__title">CKG Bankot</h3>
+                    <p class="pelayanan-mode-card__desc">Tarik data skrining pasien langsung dari antrean CKG Umum atau CKG Sekolah</p>
+                  </div>
+                  <div class="pelayanan-mode-card__action">
+                    <span>PILIH CKG BANKOT</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Mode Breadcrumb & Switcher -->
+            <div id="pelayanan-active-bar" class="pelayanan-active-bar" hidden>
+              <div class="pelayanan-active-bar__left">
+                <span id="pelayanan-active-badge" class="pelayanan-active-badge">MODE: SISTEM</span>
+                <span id="pelayanan-active-sub" class="pelayanan-active-sub">Normal Otomatis</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button id="btn-switch-pelayanan-session" class="btn-switch-mode" type="button" title="Pilih / Ganti Sesi">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>Pilih Sesi</span>
+                </button>
+                <button id="btn-switch-pelayanan-mode" class="btn-switch-mode" type="button" title="Ganti Metode Pengisian">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+                  <span>Ganti Sumber</span>
+                </button>
+              </div>
+            </div>
+
+            <form id="ckg-form" class="form" novalidate hidden>
+              <!-- Fields are injected by popup.js -->
+            </form>
+          </div>
+
+          <div id="tab-pelayanan-instan" class="tab-panel" hidden>
+            <div id="pelayanan-instan-container">
+              <!-- Content injected by pelayanan-instan.js -->
+            </div>
+          </div>
+
+          <div id="tab-pengaturan" class="tab-panel" hidden>
+            <div id="settings-panel" class="form">
+              <!-- Settings are injected by popup.js -->
+            </div>
+          </div>
+          <div id="tab-tools" class="tab-panel" hidden>
+            <div class="form">
+              <div class="field">
+                <span class="field__label">Isi Form</span>
+                <p class="field__hint">
+                  Isi otomatis form yang sedang terbuka di tab aktif tanpa
+                  mengirim. Gunakan setelah klik "Input data" pada halaman
+                  pasien, lalu klik Kirim secara manual setelah mengecek
+                  hasilnya.
+                </p>
+                <p class="field__hint" style="margin-top: 0">
+                  Membutuhkan data pasien yang sudah diambil via
+                  <strong>Ambil Data</strong>.
+                </p>
+                <div class="field field--button">
+                  <button
+                    id="btn-fill-form"
+                    class="btn btn--secondary"
+                    type="button"
+                  >
+                    Isi Form
+                  </button>
+                </div>
+              </div>
+              <hr class="form__divider" />
+              <div class="field">
+                <span class="field__label">Pelayanan Nakes</span>
+                <p class="field__hint">
+                  Toggle off pelayanan oleh nakes yang tidak diperlukan secara
+                  otomatis pada halaman yang sedang aktif.
+                </p>
+                <div class="field field--button">
+                  <button
+                    id="btn-uncheck-all"
+                    class="btn btn--danger"
+                    type="button"
+                  >
+                    Toggle off
+                  </button>
+                </div>
+              </div>
+              <p id="tools-status" class="field__hint" hidden></p>
+              <hr class="form__divider" />
+              <div class="field">
+                <span class="field__label">VPN &amp; Anti-429</span>
+                <p class="field__hint">
+                  Atur proxy Server Indonesia atau Cloudflare WARP untuk membantu mengatasi rate-limit 429.
+                </p>
+                <button class="metro-tile metro-tile--amber metro-tile--wide" data-tab="vpn-proxy" type="button" style="width: 100%; margin-top: 4px;">
+                  <div class="metro-tile__icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                  </div>
+                  <div class="metro-tile__content">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span class="metro-tile__title">VPN &amp; Anti-429</span>
+                      <span class="vpn-status-pill vpn-status-pill--off" id="vpn-metro-pill">OFF</span>
+                    </div>
+                    <span class="metro-tile__desc">Buka Pengaturan Proxy &amp; Anti-429</span>
+                  </div>
+                  <span class="metro-tile__indicator" data-tab-indicator="vpn-proxy"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-api-test" class="tab-panel" hidden></div>
+
+          <!-- ── Tab Panel: Daftar & Layani (One-Stop CKG) ─────── -->
+          <div id="tab-daftar-layani" class="tab-panel" hidden></div>
+
+          <!-- ── Tab Panel: VPN & Anti-429 Proxy Manager ─────── -->
+          <div id="tab-vpn-proxy" class="tab-panel" hidden>
+            <div class="vpn-panel-container">
+              <!-- Card 1: Network & VPN Status Banner -->
+              <div class="vpn-status-banner">
+                <div class="vpn-status-banner__header">
+                  <div class="vpn-status-banner__indicator">
+                    <span class="vpn-status-banner__pulse"></span>
+                    <span id="vpn-banner-status" class="vpn-banner-title vpn-banner-title--off">KONEKSI DIRECT (OFF)</span>
+                  </div>
+                  <span id="vpn-kemkes-status" class="badge badge--neutral">Memeriksa...</span>
+                </div>
+                <p id="vpn-banner-sub" class="vpn-status-banner__sub">Koneksi normal tanpa proxy. Aktifkan jika mengalami error 429.</p>
+
+                <div class="vpn-ip-info-box">
+                  <div class="vpn-ip-row">
+                    <span class="vpn-ip-label">IP Publik:</span>
+                    <span id="vpn-current-ip" class="vpn-ip-val">Mendeteksi...</span>
+                  </div>
+                  <div class="vpn-ip-row">
+                    <span class="vpn-ip-label">Lokasi:</span>
+                    <span id="vpn-current-location" class="vpn-ip-val">🇮🇩 Indonesia</span>
+                  </div>
+                  <div class="vpn-ip-row">
+                    <span class="vpn-ip-label">Mode Cloudflare:</span>
+                    <span id="vpn-current-warp" class="badge badge--neutral">WARP OFF</span>
+                  </div>
+                </div>
+
+                <button id="btn-vpn-check-ip" class="btn btn--secondary btn--sm btn--full" type="button" style="margin-top: 8px;">
+                  🔍 Cek IP & Status Kemkes
+                </button>
+              </div>
+
+              <!-- Card 2: Master Switch -->
+              <div class="vpn-card">
+                <div class="vpn-toggle-row">
+                  <div class="vpn-toggle-text">
+                    <span class="vpn-toggle-title">AKTIFKAN PROXY / VPN</span>
+                    <span class="vpn-toggle-desc">Bypass limit 429 Too Many Requests</span>
+                  </div>
+                  <label class="switch-wrap">
+                    <input type="checkbox" id="vpn-master-toggle" class="field__toggle" />
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Card 3: Pilihan Mode -->
+              <div class="vpn-card">
+                <label class="field__label" for="vpn-mode-select">PILIHAN SERVER / VPN</label>
+                <div class="select__wrapper">
+                  <select id="vpn-mode-select" class="field__select">
+                    <option value="preset-id">🇮🇩 Server Indonesia (Preset Cepat)</option>
+                    <option value="warp">⚡ Cloudflare WARP 1.1.1.1 (Jakarta CGK)</option>
+                    <option value="custom">🛠️ Custom Proxy (HTTP / SOCKS5)</option>
+                  </select>
+                  <span class="select__arrow">▾</span>
+                </div>
+
+                <!-- Section Preset ID -->
+                <div id="vpn-preset-section" class="vpn-mode-body">
+                  <label class="field__label" for="vpn-server-select" style="margin-top: 8px;">Pilih Lokasi Server Indonesia</label>
+                  <div class="select__wrapper">
+                    <select id="vpn-server-select" class="field__select"></select>
+                    <span class="select__arrow">▾</span>
+                  </div>
+                  <div class="vpn-action-row" style="margin-top: 8px;">
+                    <button id="btn-vpn-rotate-server" class="btn btn--secondary btn--sm btn--full" type="button">
+                      🔄 Ganti Server (Rotasi IP Baru)
+                    </button>
+                  </div>
+                  <p class="field__hint" style="margin-top: 6px;">
+                    💡 Tips: Jika satu server terkena limit 429, klik <strong>Ganti Server</strong> untuk langsung mendapatkan IP Indonesia baru!
+                  </p>
+                </div>
+
+                <!-- Section Cloudflare WARP -->
+                <div id="vpn-warp-section" class="vpn-mode-body" hidden>
+                  <div class="warp-guide-box">
+                    <div class="warp-guide-box__badge">1.1.1.1 WITH WARP</div>
+                    <p class="warp-guide-box__text">
+                      Cloudflare WARP di Indonesia terhubung ke Datacenter Jakarta (CGK). Menggunakan SOCKS5 proxy lokal di <code>127.0.0.1:40000</code>.
+                    </p>
+                    <p class="field__hint" style="margin-top: 4px;">
+                      Pastikan aplikasi <strong>Cloudflare WARP</strong> terinstall dan aktif di komputer Anda.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Section Custom Proxy -->
+                <div id="vpn-custom-section" class="vpn-mode-body" hidden>
+                  <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 6px; margin-top: 8px;">
+                    <div>
+                      <label class="field__label" for="vpn-custom-scheme">Protokol</label>
+                      <select id="vpn-custom-scheme" class="field__select" style="padding: 6px 4px;">
+                        <option value="socks5">SOCKS5</option>
+                        <option value="http">HTTP</option>
+                        <option value="https">HTTPS</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="field__label" for="vpn-custom-host">Host / IP</label>
+                      <input type="text" id="vpn-custom-host" class="field__input" value="127.0.0.1" placeholder="IP Proxy" />
+                    </div>
+                    <div>
+                      <label class="field__label" for="vpn-custom-port">Port</label>
+                      <input type="number" id="vpn-custom-port" class="field__input" value="10808" placeholder="Port" />
+                    </div>
+                  </div>
+                  <button id="btn-vpn-save-custom" class="btn btn--primary btn--sm btn--full" type="button" style="margin-top: 8px;">
+                    Simpan & Aktifkan Proxy Custom
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card 4: Jangkauan Rute (Scope) -->
+              <div class="vpn-card">
+                <label class="field__label" for="vpn-route-scope">JANGKAUAN RUTE PROXY</label>
+                <div class="select__wrapper">
+                  <select id="vpn-route-scope" class="field__select">
+                    <option value="kemkes">🎯 Hanya form.kemkes.go.id & SehatIndonesiaku (Disarankan)</option>
+                    <option value="all">🌐 Semua Trafik Browser Chrome</option>
+                  </select>
+                  <span class="select__arrow">▾</span>
+                </div>
+                <p class="field__hint" style="margin-top: 4px;">
+                  Pilihan "Hanya Kemkes" memastikan situs lain (YouTube, Google) tetap cepat dan normal tanpa melalui proxy.
+                </p>
+              </div>
+
+              <!-- Card 5: Penyelamat 429 & Mode Aman -->
+              <div class="vpn-card vpn-card--rescue">
+                <div class="vpn-card__title-flex">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <span class="vpn-card__title">PENYELAMAT ERROR 429</span>
+                </div>
+                <button id="btn-vpn-close-429" class="btn btn--danger btn--full" type="button" style="margin-top: 8px;">
+                  🧹 Tutup Semua Tab 429 Macet
+                </button>
+                <div class="field field--toggle" style="margin-top: 10px; margin-bottom: 0;">
+                  <input type="checkbox" id="vpn-safe-throttle" class="field__toggle" checked />
+                  <label class="field__toggle-label" for="vpn-safe-throttle">Mode Aman Anti-429 (Throttle Jeda)</label>
+                </div>
+                <p class="field__hint" style="margin-top: 2px;">
+                  Menjaga jeda stabil antar form agar tidak memicu rate-limit server Kemkes.
+                </p>
+              </div>
+
+              <div id="vpn-status-msg" class="vpn-toast-msg" hidden></div>
+            </div>
+          </div>
+        </main>
+
+        <div id="pendaftaran-fab" class="pendaftaran-fab" hidden>
+          <!-- Primary Actions (Row 1 - Full Width) -->
+          <button
+            id="btn-start-otomasi"
+            class="btn btn--primary pendaftaran-fab__btn pendaftaran-fab__btn--hero"
+            type="button"
+            hidden
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span>Start Otomasi</span>
+          </button>
+          <button
+            id="btn-stop-otomasi"
+            class="btn btn--danger pendaftaran-fab__btn pendaftaran-fab__btn--hero"
+            type="button"
+            hidden
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <rect x="4" y="4" width="16" height="16" />
+            </svg>
+            <span>Stop Otomasi</span>
+          </button>
+          <label
+            id="btn-upload-excel"
+            class="btn btn--primary pendaftaran-fab__btn pendaftaran-fab__btn--hero"
+            role="button"
+            tabindex="0"
+            for="input-excel-file"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Upload Excel</span>
+            <input
+              id="input-excel-file"
+              type="file"
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              style="display: none"
+            />
+          </label>
+
+          <!-- Secondary Actions (Row 2 - Half Width) -->
+          <button
+            id="btn-fetch-ckgbankot-pendaftaran"
+            class="btn btn--cloud pendaftaran-fab__btn"
+            type="button"
+            title="Ambil Antrean Pasien Langsung dari Portal CKG Bankot (CKG Umum / Sekolah)"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+              <polyline points="8 14 12 18 16 14" />
+              <line x1="12" y1="10" x2="12" y2="18" />
+            </svg>
+            <span>CKG Bankot</span>
+          </button>
+          <button
+            id="btn-restart-error"
+            class="btn btn--warning pendaftaran-fab__btn"
+            type="button"
+            hidden
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <span>Restart Error</span>
+          </button>
+          <button
+            id="btn-download-template"
+            class="btn btn--secondary pendaftaran-fab__btn"
+            type="button"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Download Template</span>
+          </button>
+        </div>
+
+        <footer id="btn-footer" class="popup__footer"></footer>
+        <div class="popup__site-link">
+          <span id="footer-version" class="popup__version">Version: 1.0.0</span>
+          <span class="popup__author">Create by: Mochamad Fauzie, S.Gz</span>
+        </div>
+      </div>
+
+      <!-- ── History Sidebar (Log History Samping Kanan) ──────────────────── -->
+      <aside id="history-sidebar" class="history-sidebar">
+        <!-- Row 1: Header (Sejajar dengan .popup__header) -->
+        <div class="history-sidebar__header">
+          <div class="history-sidebar__title-wrap">
+            <svg class="history-sidebar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <polyline points="3 3 3 8 8 8"/>
+              <polyline points="12 7 12 12 15 15"/>
+            </svg>
+            <div class="history-sidebar__header-text">
+              <h2 class="history-sidebar__title">LOG RIWAYAT</h2>
+              <span class="history-sidebar__subtitle">Aktivitas Otomasi</span>
+            </div>
+          </div>
+          <div class="history-sidebar__actions">
+            <button id="btn-export-history" class="history-sidebar__action-btn" type="button" title="Export Riwayat Log (.json)" aria-label="Export Riwayat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+            <button id="btn-import-history" class="history-sidebar__action-btn" type="button" title="Import Riwayat Log (.json)" aria-label="Import Riwayat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </button>
+            <input type="file" id="input-import-history" accept=".json" style="display: none;" />
+            <button id="btn-clear-history" class="history-sidebar__action-btn history-sidebar__action-btn--danger" type="button" title="Bersihkan riwayat menu ini" aria-label="Bersihkan Riwayat">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+            <button id="btn-close-history" class="history-sidebar__action-btn history-sidebar__action-btn--close" type="button" title="Tutup Riwayat" aria-label="Tutup Riwayat">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: Subbar (Sejajar dengan .tab-nav) -->
+        <div class="history-sidebar__subbar">
+          <div class="history-sidebar__subbar-left">
+            <span class="history-sidebar__menu-label">MENU:</span>
+            <span id="history-active-badge" class="history-sidebar__badge">PASIEN</span>
+          </div>
+          <div class="history-sidebar__subbar-right">
+            <button id="btn-new-session" class="btn-new-session" type="button" title="Mulai sesi log untuk menu ini">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Sesi</span>
+            </button>
+            <span id="history-count-badge" class="history-sidebar__count">0 Sesi</span>
+          </div>
+        </div>
+
+        <!-- Row 3: List / Empty State (Sejajar dengan .popup__body) -->
+        <div id="history-list" class="history-sidebar__list" hidden>
+          <!-- Dynamic Log Cards injected by JS -->
+        </div>
+
+        <div id="history-empty" class="history-sidebar__empty">
+          <div class="history-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <polyline points="3 3 3 8 8 8"/>
+              <polyline points="12 7 12 12 15 15"/>
+            </svg>
+          </div>
+          <p class="history-empty-title">Belum Ada Riwayat</p>
+          <p class="history-empty-desc">Upload file Excel atau mulai proses untuk mencatat log otomatis.</p>
+        </div>
+
+        <!-- Row 4: Footer Bar (Sejajar dengan footer) -->
+        <div class="history-sidebar__footer">
+          <span class="history-sidebar__footer-dot"></span>
+        </div>
+      </aside>
+
+      <!-- ── Report Sidebar (Slide Laporan Status & Error Samping Kanan) ────── -->
+      <aside id="report-sidebar" class="report-sidebar" hidden>
+        <!-- Row 1: Header -->
+        <div class="report-sidebar__header">
+          <div class="report-sidebar__title-wrap">
+            <svg class="report-sidebar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M9 15l2 2 4-4"></path>
+            </svg>
+            <div class="report-sidebar__header-text">
+              <h2 class="report-sidebar__title">LAPORAN STATUS</h2>
+              <span id="report-header-subtitle" class="report-sidebar__subtitle">Analisis Keberhasilan &amp; Error</span>
+              <span id="report-header-time" class="report-sidebar__time" style="display: block; font-size: 10px; color: #38bdf8; font-weight: 600; margin-top: 2px;"></span>
+            </div>
+          </div>
+          <div class="report-sidebar__actions">
+            <button id="btn-copy-report" class="report-sidebar__action-btn" type="button" title="Salin Ringkasan Laporan (Teks WA)" aria-label="Salin Ringkasan">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+            <button id="btn-export-report-excel" class="report-sidebar__action-btn" type="button" title="Download Laporan (.xlsx)" aria-label="Download Laporan">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+            <button id="btn-close-report" class="report-sidebar__action-btn report-sidebar__action-btn--close" type="button" title="Tutup Laporan" aria-label="Tutup Laporan">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: Menu Source Switcher -->
+        <div class="report-sidebar__subbar">
+          <div class="report-nav-tabs">
+            <button type="button" class="report-nav-tab report-nav-tab--active" data-report-menu="pendaftaran">Pendaftaran</button>
+            <button type="button" class="report-nav-tab" data-report-menu="pasien">Pasien</button>
+            <button type="button" class="report-nav-tab" data-report-menu="pelayanan">Pelayanan</button>
+          </div>
+        </div>
+
+        <!-- Row 3: Metrics summary grid -->
+        <div class="report-metrics-grid">
+          <div class="report-metric-card report-metric-card--success" title="Total Data Berhasil">
+            <span class="report-metric-val" id="report-stat-success">0</span>
+            <span class="report-metric-label">Berhasil</span>
+          </div>
+          <div class="report-metric-card report-metric-card--error" title="Total Data Error / Gagal">
+            <span class="report-metric-val" id="report-stat-error">0</span>
+            <span class="report-metric-label">Error / Gagal</span>
+          </div>
+          <div class="report-metric-card report-metric-card--warning" title="Sudah Terdaftar / Pernah Input">
+            <span class="report-metric-val" id="report-stat-warning">0</span>
+            <span class="report-metric-label">Pernah Input</span>
+          </div>
+          <div class="report-metric-card report-metric-card--total" title="Total Keseluruhan Pasien">
+            <span class="report-metric-val" id="report-stat-total">0</span>
+            <span class="report-metric-label">Total</span>
+          </div>
+        </div>
+
+        <!-- Row 4: Search & Status Filter Filter Bar -->
+        <div class="report-filter-bar">
+          <div class="report-search-wrap">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="report-search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="report-search-input" class="report-search-input" placeholder="Cari nama atau NIK..." />
+            <button type="button" id="btn-clear-report-search" class="report-search-clear" hidden>×</button>
+          </div>
+          <div class="report-filter-chips">
+            <button type="button" class="report-chip report-chip--active" data-filter="all">Semua</button>
+            <button type="button" class="report-chip report-chip--error" data-filter="error">Hanya Error</button>
+            <button type="button" class="report-chip report-chip--success" data-filter="success">Berhasil</button>
+            <button type="button" class="report-chip report-chip--warning" data-filter="warning">Pernah Input</button>
+          </div>
+        </div>
+
+        <!-- Row 4B: Date Filter Bar (Tahun, Bulan, Tanggal) -->
+        <div class="report-date-filter-bar">
+          <div class="report-date-filter-item">
+            <span class="report-date-filter-label">Thn:</span>
+            <select id="report-filter-year" class="report-date-select">
+              <option value="all">Semua</option>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+          <div class="report-date-filter-item">
+            <span class="report-date-filter-label">Bln:</span>
+            <select id="report-filter-month" class="report-date-select">
+              <option value="all">Semua</option>
+              <option value="01">Jan</option>
+              <option value="02">Feb</option>
+              <option value="03">Mar</option>
+              <option value="04">Apr</option>
+              <option value="05">Mei</option>
+              <option value="06">Jun</option>
+              <option value="07">Jul</option>
+              <option value="08">Agu</option>
+              <option value="09">Sep</option>
+              <option value="10">Okt</option>
+              <option value="11">Nov</option>
+              <option value="12">Des</option>
+            </select>
+          </div>
+          <div class="report-date-filter-item" style="flex: 1; min-width: 105px;">
+            <span class="report-date-filter-label">Tgl:</span>
+            <input type="date" id="report-filter-date" class="report-date-input" />
+          </div>
+          <button type="button" id="btn-reset-report-date" class="report-date-reset-btn" title="Reset filter waktu (Tahun/Bulan/Tanggal)">✕</button>
+        </div>
+
+        <!-- Row 5: List Items / Empty State -->
+        <div id="report-list" class="report-sidebar__list" hidden>
+          <!-- Dynamic Report Cards injected by JS -->
+        </div>
+
+        <div id="report-empty" class="report-sidebar__empty">
+          <div class="report-empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <p class="report-empty-title">Belum Ada Data Laporan</p>
+          <p class="report-empty-desc">Upload file Excel atau jalankan otomasi untuk melihat laporan status berhasil dan rincian error di sini.</p>
+        </div>
+
+        <!-- Row 6: Footer -->
+        <div class="report-sidebar__footer">
+          <span id="report-footer-summary" class="report-footer-text">Laporan Otomasi CKG</span>
+        </div>
+      </aside>
+
+      <!-- Backdrop overlay for mobile history drawer -->
+      <div id="history-backdrop" class="history-backdrop" hidden></div>
+    </div>
+  </div>
+
+    <!-- ── Modal Dialog: Ambil Data dari CKG Bankot (Pilihan: CKG Umum vs CKG Sekolah) ── -->
+    <div id="modal-ckgbankot-picker" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+      <div style="background: #0f172a; border: 1.5px solid #0284c7; border-radius: 14px; width: 340px; max-width: 90vw; padding: 18px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; color: #38bdf8;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            <span>Ambil Data CKG Bankot</span>
+          </div>
+          <button id="btn-close-ckgbankot-modal" type="button" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+        </div>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0 0 14px 0; line-height: 1.4;">
+          Pilih kategori data yang ingin ditarik langsung dari antrean Cloud CKG Bankot:
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+          <!-- Option 1: CKG Umum -->
+          <button id="btn-pick-ckgbankot-umum" type="button" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(2, 132, 199, 0.15); border: 1.5px solid #0284c7; border-radius: 10px; color: #f8fafc; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #38bdf8; display: flex; align-items: center; gap: 6px;">
+                <span>🏢 CKG Umum</span>
+                <span style="background: #0284c7; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700;">Cek Kesehatan Gratis</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">Data dari menu Cek Kesehatan Gratis</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <!-- Option 2: CKG Sekolah -->
+          <button id="btn-pick-ckgbankot-sekolah" type="button" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981; border-radius: 10px; color: #f8fafc; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #34d399; display: flex; align-items: center; gap: 6px;">
+                <span>🏫 CKG Sekolah</span>
+                <span style="background: #059669; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700;">Siswa Sekolah</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">Data dari menu Sekolah</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div id="ckgbankot-modal-status" style="font-size: 11.5px; color: #facc15; text-align: center; display: none; margin-bottom: 8px;"></div>
+      </div>
+    </div>
+
+    <script src="src/xlsx.mini.min.js"></script>
+    <script type="module" src="src/popup.js"></script>
+  </body>
+</html>

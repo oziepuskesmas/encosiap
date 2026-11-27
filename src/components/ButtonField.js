@@ -1,0 +1,1 @@
+export function ButtonField({label:t,type:e="button",variant:n="primary",onClick:o}){const c=document.createElement("div");c.className="field field--button";const a=document.createElement("button");return a.type=e,a.className=`btn btn--${n}`,a.textContent=t,"function"==typeof o&&a.addEventListener("click",o),c.appendChild(a),c}
